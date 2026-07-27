@@ -15,7 +15,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  MousePointerClick,
   KeyRound
 } from 'lucide-react'
 
@@ -27,7 +26,6 @@ const ADMIN_NAV = [
   { href: '/admin/policy',    icon: ShieldCheck,     label: 'Kiểm tra Vi phạm' },
   { href: '/admin/ai',        icon: Brain,           label: 'AI Knowledge' },
   { href: '/admin/smtp',      icon: Mail,            label: 'Email / SMTP' },
-  { href: '/admin/pixels',    icon: MousePointerClick, label: 'Tracking Pixels' },
   { divider: true },
   { href: '/admin/security',  icon: KeyRound,        label: 'Bảo mật' },
 ]
