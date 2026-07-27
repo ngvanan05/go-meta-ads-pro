@@ -8,24 +8,30 @@ import { apiPost } from '../../lib/adminUtils'
 
 function Badge({ status }) {
   const map = {
-    pending:     { bg: 'var(--ylw)', color: '#fff', label: 'Chờ xử lý' },
-    confirmed:   { bg: 'var(--grn)', color: '#fff', label: 'Đã xác nhận' },
-    cancelled:   { bg: 'var(--red)', color: '#fff', label: 'Đã hủy' },
-    active:      { bg: 'var(--grn)', color: '#fff', label: 'Hoạt động' },
-    inactive:    { bg: 'var(--mut)', color: '#fff', label: 'Không hoạt động' },
+    pending:     { color: 'var(--ylw)', label: 'Chờ xử lý' },
+    confirmed:   { color: 'var(--grn)', label: 'Đã xác nhận' },
+    cancelled:   { color: 'var(--red)', label: 'Đã hủy' },
+    active:      { color: 'var(--grn)', label: 'Hoạt động' },
+    inactive:    { color: 'var(--mut)', label: 'Không hoạt động' },
   }
-  const s = map[status] || { bg: 'var(--s3)', color: 'var(--mut)', label: status || 'N/A' }
+  const s = map[status] || { color: 'var(--mut)', label: status || 'N/A' }
   return (
     <span style={{
-      display: 'inline-block',
-      padding: '4px 10px',
-      borderRadius: '20px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 5,
+      minWidth: 78,
+      padding: '3px 10px',
+      borderRadius: 6,
       fontSize: 11,
-      fontWeight: 700,
-      background: s.bg,
+      fontWeight: 600,
       color: s.color,
+      background: 'color-mix(in srgb, ' + s.color + ' 12%, transparent)',
       whiteSpace: 'nowrap',
+      flexShrink: 0,
     }}>
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
       {s.label}
     </span>
   )
@@ -155,7 +161,7 @@ export default function AdminDashboard() {
               {webRecent.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {webRecent.map((u, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: i < webRecent.length - 1 ? '1px solid var(--bd)' : 'none' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, borderBottom: i < webRecent.length - 1 ? '1px solid var(--bd)' : 'none' }}>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 14 }}>{u.name}</div>
                         <div style={{ fontSize: 12, color: 'var(--mut)' }}>{u.email}</div>
@@ -172,7 +178,7 @@ export default function AdminDashboard() {
               {ticketRecent.length > 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {ticketRecent.map((t, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 12, borderBottom: i < ticketRecent.length - 1 ? '1px solid var(--bd)' : 'none' }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingBottom: 12, borderBottom: i < ticketRecent.length - 1 ? '1px solid var(--bd)' : 'none' }}>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 14 }}>{t.subject || 'Không có tiêu đề'}</div>
                         <div style={{ fontSize: 12, color: 'var(--mut)' }}>{t.user_email}</div>

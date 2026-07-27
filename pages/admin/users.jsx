@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../../components/AdminLayout'
 import { Spinner, EmptyState, AdminPageHeader, AdminTable, AdminCard, AdminButton, AdminInput, AdminSelect } from '../../components/AdminUI'
-import { Users, RefreshCw, ShieldCheck, Edit, Unlink } from 'lucide-react'
+import { Users, RefreshCw, ShieldCheck, Edit, Unlink, CheckCircle2 } from 'lucide-react'
 
 const PLAN_LABELS = { trial: 'Dùng thử', personal: 'Personal', business: 'Business', agency: 'Agency', 'ca-nhan': 'Cá nhân', 'doanh-nghiep': 'Doanh nghiệp' }
 const PLAN_COLORS = { trial: '#64748b', personal: '#3b82f6', business: '#8b5cf6', agency: '#ec4899', 'ca-nhan': '#3b82f6', 'doanh-nghiep': '#8b5cf6' }
@@ -177,7 +177,7 @@ function WebUsersTab() {
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: 12 }}>
                         {u.fb_connected
-                          ? <span style={{ color: '#059669', fontWeight: 600 }}>✅ Đã kết nối</span>
+                          ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#059669', fontWeight: 600 }}><CheckCircle2 size={13} /> Đã kết nối</span>
                           : <span style={{ color: 'var(--mut)' }}>Chưa kết nối</span>}
                       </td>
                       <td style={{ padding: '10px 14px', fontSize: 12, color: '#475569' }}>
