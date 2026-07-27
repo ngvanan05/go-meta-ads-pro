@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import useSWR from 'swr'
 import DashboardLayout from '../../components/DashboardLayout'
 import { fetcher } from '../../lib/fetcher'
-import { Ticket, Send, ShieldCheck, CheckCircle, Image, Bot, ClipboardList, Search, MessageCircle, X } from 'lucide-react'
-
-const API_AI = 'https://go-meta-ads-backend.vercel.app/api/ai-chat'
+import { Ticket, Send, ShieldCheck, CheckCircle, Image, ClipboardList, Search, X } from 'lucide-react'
 
 const STATUS_MAP = {
   open:        { label: 'Chờ xử lý',     bg: 'rgba(59,130,246,.15)',  color: 'var(--blue)' },
@@ -26,28 +24,7 @@ const inpStyle = (extra = {}) => ({
   ...extra,
 })
 
-/* ─── Upload helper ────────────────────────────────────────────────────────── */
-async function uploadImageBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-      try {
-        const r = await fetch('/api/upload-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image_base64: e.target.result }),
-        })
-        const d = await r.json()
-        if (!d.ok) throw new Error(d.error || 'Upload thất bại')
-        resolve({ url: d.url, thumbnail: d.thumbnail || d.url })
-      } catch (err) { reject(err) }
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-/* ─── ImageGrid ────────────────────────────────────────────────────────────── */
+/* ─── ImageGrid — hiển thị ảnh đã đính kèm từ trước (ticket cũ) ─────────────── */
 function ImageGrid({ urls, onRemove }) {
   const [fullImg, setFullImg] = useState(null)
   if (!urls?.length) return null
@@ -91,25 +68,10 @@ const FieldLabel = ({ children }) => (
 /* ─── TAB 1: GỬI TICKET ───────────────────────────────────────────────────── */
 function SubmitTab({ onCreated }) {
   const [form, setForm] = useState({ subject: '', message: '', priority: 'normal', issue_type: 'Lỗi phần mềm' })
-  const [images, setImages] = useState([])
-  const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
 
   const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }))
-
-  async function handleImageUpload(e) {
-    const files = Array.from(e.target.files || [])
-    if (!files.length) return
-    if (images.length >= 3) { alert('Tối đa 3 ảnh'); return }
-    setUploading(true)
-    try {
-      const slots = Math.min(files.length, 3 - images.length)
-      const uploaded = await Promise.all(files.slice(0, slots).map(uploadImageBase64))
-      setImages(prev => [...prev, ...uploaded].slice(0, 3))
-    } catch (err) { alert('Upload ảnh thất bại: ' + err.message) }
-    finally { setUploading(false); e.target.value = '' }
-  }
 
   async function handleSubmit() {
     if (!form.subject.trim()) return setResult({ ok: false, error: 'Vui lòng nhập tiêu đề' })
@@ -120,13 +82,12 @@ function SubmitTab({ onCreated }) {
       const r = await fetch('/api/user/tickets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', ...form, image_urls: images.map(u => u.url) }),
+        body: JSON.stringify({ action: 'create', ...form }),
       })
       const d = await r.json()
       if (d.ok) {
         setResult({ ok: true, ticket: d.ticket })
         setForm({ subject: '', message: '', priority: 'normal', issue_type: 'Lỗi phần mềm' })
-        setImages([])
         onCreated?.()
       } else {
         setResult({ ok: false, error: d.error || 'Gửi thất bại' })
@@ -165,19 +126,6 @@ function SubmitTab({ onCreated }) {
           onChange={set('message')}
         />
       </div>
-      <div style={{ marginBottom: 20 }}>
-        <FieldLabel>Đính kèm ảnh (tùy chọn, tối đa 3)</FieldLabel>
-        <input
-          type="file" accept="image/*" multiple
-          disabled={uploading || images.length >= 3}
-          onChange={handleImageUpload}
-          style={{ fontSize: 13, color: 'var(--mut)' }}
-        />
-        {uploading && <div style={{ fontSize: 12, color: 'var(--blue)', marginTop: 6 }}>Đang upload ảnh...</div>}
-        <ImageGrid urls={images} onRemove={i => setImages(prev => prev.filter((_, idx) => idx !== i))} />
-        <div style={{ fontSize: 12, color: 'var(--mut)', marginTop: 6 }}>Đính kèm ảnh screenshot để chúng tôi chẩn đoán nhanh hơn.</div>
-      </div>
-
       {result && !result.ok && (
         <div style={{ background: 'rgba(239,68,68,.12)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 9, padding: '12px 16px', color: 'var(--red)', fontSize: 13, marginBottom: 16 }}>
           {result.error}
@@ -195,8 +143,8 @@ function SubmitTab({ onCreated }) {
 
       <button
         onClick={handleSubmit}
-        disabled={submitting || uploading}
-        style={{ width: '100%', padding: 14, background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting || uploading ? .6 : 1, fontFamily: 'inherit' }}
+        disabled={submitting}
+        style={{ width: '100%', padding: 14, background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? .6 : 1, fontFamily: 'inherit' }}
       >
         {submitting ? 'Đang gửi...' : <><Send size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Gửi yêu cầu hỗ trợ</>}
       </button>
@@ -209,8 +157,6 @@ function LookupTab({ refresh }) {
   const [tickets, setTickets] = useState([])
   const [selected, setSelected] = useState(null)
   const [replyText, setReplyText] = useState('')
-  const [replyImages, setReplyImages] = useState([])
-  const [replyUploading, setReplyUploading] = useState(false)
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState(null)
 
@@ -226,20 +172,8 @@ function LookupTab({ refresh }) {
   })
   const loading = isValidating && tickets.length === 0
 
-  async function handleImageUpload(e) {
-    const files = Array.from(e.target.files || [])
-    if (!files.length) return
-    setReplyUploading(true)
-    try {
-      const slots = Math.min(files.length, 3 - replyImages.length)
-      const uploaded = await Promise.all(files.slice(0, slots).map(uploadImageBase64))
-      setReplyImages(prev => [...prev, ...uploaded].slice(0, 3))
-    } catch (err) { showToast('Upload ảnh thất bại', 'error') }
-    finally { setReplyUploading(false); e.target.value = '' }
-  }
-
   async function handleReply() {
-    if (!replyText.trim() && replyImages.length === 0) return
+    if (!replyText.trim()) return
     setSending(true)
     try {
       const r = await fetch('/api/user/tickets', {
@@ -249,13 +183,11 @@ function LookupTab({ refresh }) {
           action: 'reply',
           ticket_id: selected.id,
           message: replyText,
-          image_urls: replyImages.map(u => u.url),
         }),
       })
       const d = await r.json()
       if (!d.ok) return showToast(d.error || 'Lỗi', 'error')
       setReplyText('')
-      setReplyImages([])
       showToast('Đã gửi phản hồi')
       const updated = await refreshTickets()
       if (updated?.ok) {
@@ -335,21 +267,10 @@ function LookupTab({ refresh }) {
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
             />
-            <div style={{ marginTop: 10, marginBottom: 10 }}>
-              <FieldLabel>Đính kèm ảnh (tùy chọn)</FieldLabel>
-              <input
-                type="file" accept="image/*" multiple
-                disabled={replyUploading || replyImages.length >= 3}
-                onChange={handleImageUpload}
-                style={{ fontSize: 13, color: 'var(--mut)' }}
-              />
-              {replyUploading && <div style={{ fontSize: 12, color: 'var(--blue)', marginTop: 4 }}>Đang upload...</div>}
-              <ImageGrid urls={replyImages} onRemove={i => setReplyImages(prev => prev.filter((_, idx) => idx !== i))} />
-            </div>
             <button
               onClick={handleReply}
-              disabled={sending || replyUploading || (!replyText.trim() && replyImages.length === 0)}
-              style={{ padding: '9px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: sending || replyUploading ? .5 : 1, fontFamily: 'inherit' }}
+              disabled={sending || !replyText.trim()}
+              style={{ marginTop: 10, padding: '9px 20px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: sending ? .5 : 1, fontFamily: 'inherit' }}
             >
               {sending ? 'Đang gửi...' : <><Send size={13} style={{ marginRight: 6, verticalAlign: 'middle' }} /> Gửi phản hồi</>}
             </button>
@@ -398,94 +319,6 @@ function LookupTab({ refresh }) {
   )
 }
 
-/* ─── TAB 3: CHAT AI ──────────────────────────────────────────────────────── */
-function ChatTab() {
-  const [messages, setMessages] = useState([
-    { role: 'bot', text: 'Xin chào! Tôi là Go Meta AI. Bạn cần hỗ trợ gì về Go Meta Ads Pro?' },
-  ])
-  const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
-  const chatRef = useRef(null)
-
-  useEffect(() => {
-    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
-  }, [messages, loading])
-
-  async function send() {
-    const msg = input.trim()
-    if (!msg || loading) return
-    setInput('')
-    setMessages(prev => [...prev, { role: 'user', text: msg }])
-    setLoading(true)
-    try {
-      const res = await fetch(API_AI, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg }),
-      })
-      const data = await res.json()
-      setMessages(prev => [...prev, { role: 'bot', text: data.reply || data.message || 'Không có phản hồi từ AI.' }])
-    } catch {
-      setMessages(prev => [...prev, { role: 'bot', text: 'AI đang bận. Vui lòng thử lại hoặc gửi ticket để được hỗ trợ trực tiếp.' }])
-    } finally { setLoading(false) }
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <div ref={chatRef} style={{ height: 420, overflowY: 'auto', background: 'var(--s2)', borderRadius: '10px 10px 0 0', padding: '16px', scrollBehavior: 'smooth' }}>
-        {messages.map((m, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'bot' ? 'flex-start' : 'flex-end', marginBottom: 12 }}>
-            {m.role === 'bot' && (
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8, flexShrink: 0, alignSelf: 'flex-end', color: '#fff' }}><Bot size={16} /></div>
-            )}
-            <div style={{
-              maxWidth: '76%', padding: '10px 14px', fontSize: 14, lineHeight: 1.7,
-              borderRadius: m.role === 'bot' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
-              background: m.role === 'bot' ? 'var(--s1)' : 'var(--primary)',
-              color: m.role === 'bot' ? 'var(--txt)' : '#fff',
-              border: m.role === 'bot' ? '1px solid var(--bd)' : 'none',
-            }}>
-              {m.text}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 12 }}>
-            <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8, color: '#fff' }}><Bot size={16} /></div>
-            <div style={{ background: 'var(--s1)', border: '1px solid var(--bd)', padding: '12px 16px', borderRadius: '4px 14px 14px 14px', display: 'flex', gap: 5, alignItems: 'center' }}>
-              {[0, 1, 2].map(j => (
-                <span key={j} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--mut)', display: 'inline-block', animation: `chatpulse 1.2s cubic-bezier(.16,1,.3,1) ${j * 0.2}s infinite` }} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: 8, background: 'var(--s1)', borderRadius: '0 0 10px 10px', padding: '10px 12px', borderTop: '1px solid var(--bd)' }}>
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send())}
-          placeholder="Nhập câu hỏi của bạn..."
-          disabled={loading}
-          style={{ flex: 1, background: 'var(--s2)', border: '1.5px solid var(--bd)', borderRadius: 8, color: 'var(--txt)', padding: '9px 13px', fontSize: 14, fontFamily: 'inherit', outline: 'none' }}
-        />
-        <button onClick={send} disabled={loading || !input.trim()} style={{ flexShrink: 0, padding: '9px 18px', background: 'var(--primary)', color: '#fff', border: 'none', borderRadius: 8, fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: loading || !input.trim() ? .5 : 1 }}>
-          Gửi
-        </button>
-      </div>
-      <div style={{ fontSize: 12, color: 'var(--mut)', textAlign: 'center', marginTop: 8 }}>
-        AI có thể trả lời chưa chính xác. Với vấn đề khẩn cấp, vui lòng gửi ticket.
-      </div>
-      <style jsx>{`
-        @keyframes chatpulse {
-          0%, 80%, 100% { transform: scale(1); opacity: .4; }
-          40% { transform: scale(1.35); opacity: 1; }
-        }
-      `}</style>
-    </div>
-  )
-}
-
 /* ─── MAIN PAGE ───────────────────────────────────────────────────────────── */
 export default function Support() {
   const [tab, setTab] = useState('submit')
@@ -494,7 +327,6 @@ export default function Support() {
   const TABS = [
     { id: 'submit', icon: ClipboardList, label: 'Gửi ticket' },
     { id: 'lookup', icon: Search, label: 'Phiếu hỗ trợ' },
-    { id: 'chat',   icon: MessageCircle, label: 'Chat AI' },
   ]
 
   function handleCreated() {
@@ -530,7 +362,6 @@ export default function Support() {
 
         {tab === 'submit' && <SubmitTab onCreated={handleCreated} />}
         {tab === 'lookup' && <LookupTab refresh={refreshSignal} />}
-        {tab === 'chat'   && <ChatTab />}
       </div>
       <style jsx>{`
         /* Focus indicators */

@@ -1,8 +1,11 @@
-# Cleanup Log — Xóa chức năng Affiliate & Kiểm soát Lãi/Lỗ
+# Cleanup Log — Xóa chức năng Affiliate, Kiểm soát Lãi/Lỗ & Tracking Pixels
 
 Ngày: 2026-07-27
-Lý do: Tinh gọn sản phẩm để chuẩn bị báo cáo. Xác nhận trước khi xóa: không có affiliate/hoa hồng nào đang chờ duyệt trong hệ thống.
-Trạng thái: Đã xóa ở code, **chưa commit/push** — chờ xác nhận.
+Lý do: Tinh gọn sản phẩm để chuẩn bị báo cáo.
+
+Trạng thái:
+- Mục 1 (Profit) & Mục 2 (Affiliate) — **đã commit & push lên `origin`** (kèm 1 commit fix riêng lỗi 500 ở admin 2FA, không liên quan cleanup)
+- Mục 3 (Tracking Pixels) — đã xóa ở code, **chưa commit/push** — chờ xác nhận
 
 ---
 
@@ -62,6 +65,51 @@ Các bảng/cột sau **không còn được code tham chiếu** (đã grep xác
 
 ---
 
+## 3. Cấu hình Tracking Pixels
+
+### File đã xóa
+- `pages/admin/pixels.jsx` (trang UI nhập Facebook Pixel / GTM / GA4 / TikTok Pixel / Google Ads Conversion ID)
+
+### File đã sửa (gỡ tham chiếu)
+- `pages/_app.jsx` — bỏ component `PixelInjector` (script tự chèn các mã tracking vào mọi trang khi load), bỏ import `useRef` không còn dùng
+- `components/AdminLayout.jsx` — bỏ mục nav "Tracking Pixels" + icon `MousePointerClick`
+
+### Giữ nguyên — KHÔNG xóa
+- `pages/api/admin/site-settings.js` — API key-value **dùng chung**, vẫn phục vụ Policy docs (`policy_doc_*`) và AI Knowledge (`ai_knowledge_prompts`). Xóa sẽ phá 2 tính năng đó.
+
+### Dữ liệu DB liên quan
+Bảng `site_settings` **không xóa** (dùng chung). Chỉ các **row** với key sau không còn được đọc, an toàn xóa nếu muốn dọn:
+- `fb_pixel_id`, `gtm_id`, `ga4_id`, `tiktok_pixel_id`, `google_ads_id`
+
+```sql
+DELETE FROM site_settings
+WHERE key IN ('fb_pixel_id', 'gtm_id', 'ga4_id', 'tiktok_pixel_id', 'google_ads_id');
+```
+
+---
+
+## 4. Hỗ trợ kỹ thuật — bỏ tab "Chat AI" & đính kèm ảnh
+
+### Lý do
+- **Chat AI**: gọi backend ngoài `https://go-meta-ads-backend.vercel.app/api/ai-chat` — không thuộc repo này, không rõ còn hoạt động không, và trùng chức năng với AI chat thật (`ReportChatPanel`, `AIChatPanel`) đã tích hợp đúng infra dự án (`/api/ai/report-chat`, `/api/ai/campaign-chat`).
+- **Đính kèm ảnh**: theo yêu cầu, bỏ khả năng đính kèm khi gửi ticket mới và khi phản hồi ticket.
+
+### File đã sửa — `pages/dashboard/support.jsx`
+- Xóa hẳn `ChatTab` (component, state, fetch tới `API_AI`), xóa tab "Chat AI" khỏi `TABS` và khỏi render
+- Xóa `handleImageUpload` + input file + `ImageGrid` (chế độ upload) trong `SubmitTab` (gửi ticket mới) và `LookupTab` (phản hồi ticket)
+- Xóa helper `uploadImageBase64()` (không còn nơi nào gọi)
+- **Giữ lại** component `ImageGrid` ở chế độ chỉ xem — vẫn hiển thị ảnh đã đính kèm từ các ticket/reply cũ trong DB (`selected.image_urls`, `reply.image_urls`), không xóa dữ liệu lịch sử, chỉ bỏ khả năng đính kèm ảnh MỚI
+- Bỏ import không dùng: `Bot`, `MessageCircle`, `useEffect`, `useRef`
+
+### Không đổi
+- `pages/api/upload-image.js`, `lib/uploadImage.js` — vẫn giữ nguyên, vì **admin vẫn đính kèm ảnh được khi reply ticket** (`pages/admin/tickets.jsx`), API này dùng chung
+- `pages/api/user/tickets.js` — không sửa, vẫn nhận `image_urls` nếu có (giờ frontend đơn giản là không gửi nữa)
+
+### Dữ liệu DB liên quan
+Không cần xóa gì — cột `image_urls` trong bảng ticket vẫn giữ nguyên để hiển thị ảnh cũ (nếu có), chỉ đơn giản sẽ luôn rỗng cho ticket/reply mới từ giờ.
+
+---
+
 ## Đã kiểm tra
-- `npm run build` chạy thành công, không lỗi import gãy, không còn route `/affiliate`, `/dashboard/profit`, `/dashboard/affiliate`, `/admin/affiliates` trong output build
+- `npm run build` chạy thành công sau mỗi đợt xóa, không lỗi import gãy, không còn route liên quan trong output build
 - Grep toàn repo (`*.js`, `*.jsx`) không còn match `affiliate`/`profit`/`referred_by` nào trong code
