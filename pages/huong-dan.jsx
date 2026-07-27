@@ -8,27 +8,25 @@ import { useLang } from '../lib/LangContext'
 const SECTIONS_VI = [
   { id: 'cai-dat',    label: 'Đăng ký & Đăng nhập',     num: 1 },
   { id: 'chien-dich', label: 'Tab Chiến dịch',          num: 2 },
-  { id: 'lai-lo',     label: 'Tab Tính Lãi Lỗ',         num: 3 },
-  { id: 'policy',     label: 'Tab Kiểm tra Chính sách', num: 4 },
-  { id: 'tu-dong-qc', label: 'Tab Tự động Set QC',      num: 5 },
-  { id: 'auto-care',  label: 'Tab Auto Care',           num: 6 },
-  { id: 'bao-cao',    label: 'Tab Báo cáo',             num: 7 },
-  { id: 'thong-bao',  label: 'Tab Thông báo',           num: 8 },
-  { id: 'nhan-vien',  label: 'Tab Nhân viên',           num: 9 },
-  { id: 'affiliate',  label: 'Tab Affiliate & Mua Gói', num: 10 },
+  { id: 'policy',     label: 'Tab Kiểm tra Chính sách', num: 3 },
+  { id: 'tu-dong-qc', label: 'Tab Tự động Set QC',      num: 4 },
+  { id: 'auto-care',  label: 'Tab Auto Care',           num: 5 },
+  { id: 'bao-cao',    label: 'Tab Báo cáo',             num: 6 },
+  { id: 'thong-bao',  label: 'Tab Thông báo',           num: 7 },
+  { id: 'nhan-vien',  label: 'Tab Nhân viên',           num: 8 },
+  { id: 'mua-goi',    label: 'Tab Mua Gói',             num: 9 },
 ]
 
 const SECTIONS_EN = [
   { id: 'cai-dat',    label: 'Register & Sign In',      num: 1 },
   { id: 'chien-dich', label: 'Campaigns Tab',           num: 2 },
-  { id: 'lai-lo',     label: 'P&L Calculator Tab',      num: 3 },
-  { id: 'policy',     label: 'Policy Check Tab',        num: 4 },
-  { id: 'tu-dong-qc', label: 'Auto Set Ads Tab',        num: 5 },
-  { id: 'auto-care',  label: 'Auto Care Tab',           num: 6 },
-  { id: 'bao-cao',    label: 'Reports Tab',             num: 7 },
-  { id: 'thong-bao',  label: 'Notifications Tab',       num: 8 },
-  { id: 'nhan-vien',  label: 'Staff Tab',               num: 9 },
-  { id: 'affiliate',  label: 'Affiliate & Plans Tab',   num: 10 },
+  { id: 'policy',     label: 'Policy Check Tab',        num: 3 },
+  { id: 'tu-dong-qc', label: 'Auto Set Ads Tab',        num: 4 },
+  { id: 'auto-care',  label: 'Auto Care Tab',           num: 5 },
+  { id: 'bao-cao',    label: 'Reports Tab',             num: 6 },
+  { id: 'thong-bao',  label: 'Notifications Tab',       num: 7 },
+  { id: 'nhan-vien',  label: 'Staff Tab',               num: 8 },
+  { id: 'mua-goi',    label: 'Plans Tab',               num: 9 },
 ]
 
 /* ─── SUB-COMPONENTS ─────────────────────────────────────────────────────── */
@@ -481,58 +479,9 @@ export default function HuongDan() {
               </SectionCard>
             </Reveal>
 
-            {/* 3 — Tab Tính Lãi Lỗ */}
+            {/* 3 — Tab Kiểm tra Chính sách (MỚI) */}
             <Reveal delay={40}>
-              <SectionCard id="lai-lo" title={isEN ? '3. P&L Calculator Tab' : '3. Tab Tính Lãi Lỗ'}>
-                <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
-                  {isEN
-                    ? 'Accurately calculate break-even point and maximum CPA based on actual product cost structure.'
-                    : 'Tính toán chính xác điểm hòa vốn và CPA tối đa dựa trên cấu trúc chi phí thực tế của sản phẩm.'}
-                </p>
-
-                <SubHeading>{isEN ? 'Required inputs' : 'Thông tin cần nhập'}</SubHeading>
-                <BulletList items={isEN ? [
-                  'Product name',
-                  'Cost of goods (purchase price)',
-                  'Selling price (customer pays)',
-                  '% advertising cost (of revenue)',
-                  'Shipping fee (per order)',
-                  '% return rate (refund rate)',
-                  'VAT (if applicable)',
-                ] : [
-                  'Tên sản phẩm',
-                  'Giá vốn (giá nhập hàng)',
-                  'Giá bán (giá khách trả)',
-                  '% chi phí quảng cáo (trên doanh thu)',
-                  'Phí ship (đồng/đơn)',
-                  '% hoàn hàng (tỉ lệ trả hàng)',
-                  'VAT (nếu có)',
-                ]} />
-
-                <SubHeading>{isEN ? 'Calculation results' : 'Kết quả tính toán'}</SubHeading>
-                <BulletList items={isEN ? [
-                  'Profit / loss per order (based on actuals)',
-                  'ROI — Return on investment rate',
-                  'Break-even point — Maximum acceptable CPA',
-                ] : [
-                  'Lãi / lỗ mỗi đơn hàng (theo thực tế)',
-                  'ROI — Tỉ suất sinh lời trên đầu tư',
-                  'Điểm hòa vốn — CPA tối đa có thể chấp nhận',
-                ]} />
-
-                <SubHeading>{isEN ? 'Managing multiple products' : 'Quản lý nhiều sản phẩm'}</SubHeading>
-                <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.7, margin: 0 }}>
-                  {isEN
-                    ? <>Click the <strong>"+Add Product"</strong> tab to add a new product. Limit: 3 products (Personal), 10 products (Business), Unlimited (Agency).</>
-                    : <>Nhấn tab <strong>"+Thêm SP"</strong> để thêm sản phẩm mới. Giới hạn: 3 SP (Personal), 10 SP (Business), Không giới hạn (Agency).</>}
-                </p>
-
-              </SectionCard>
-            </Reveal>
-
-            {/* 4 — Tab Kiểm tra Chính sách (MỚI) */}
-            <Reveal delay={40}>
-              <SectionCard id="policy" title={isEN ? '4. Policy Check Tab' : '4. Tab Kiểm tra Chính sách'} badge="Business+">
+              <SectionCard id="policy" title={isEN ? '3. Policy Check Tab' : '3. Tab Kiểm tra Chính sách'} badge="Business+">
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
                   {isEN
                     ? 'AI analyzes ad content — detects policy violation risks before you run campaigns.'
@@ -571,7 +520,7 @@ export default function HuongDan() {
 
             {/* 7 — Tab Báo cáo */}
             <Reveal delay={40}>
-              <SectionCard id="bao-cao" title={isEN ? '7. Reports Tab' : '7. Tab Báo cáo'} badge="Business+">
+              <SectionCard id="bao-cao" title={isEN ? '6. Reports Tab' : '6. Tab Báo cáo'} badge="Business+">
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
                   {isEN
                     ? 'View consolidated reports, analyze trends, and send automated reports to your team.'
@@ -610,7 +559,7 @@ export default function HuongDan() {
 
             {/* 6 — Tab Auto Care */}
             <Reveal delay={40}>
-              <SectionCard id="auto-care" title="6. Tab Auto Care">
+              <SectionCard id="auto-care" title="5. Tab Auto Care">
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
                   {isEN
                     ? 'Automate enabling/disabling adsets by schedule and by performance conditions — no need to monitor all day.'
@@ -650,7 +599,7 @@ export default function HuongDan() {
 
             {/* 5 — Tab Tự động Set QC */}
             <Reveal delay={40}>
-              <SectionCard id="tu-dong-qc" title={isEN ? '5. Auto Set Ads Tab' : '5. Tab Tự động Set QC'}>
+              <SectionCard id="tu-dong-qc" title={isEN ? '4. Auto Set Ads Tab' : '4. Tab Tự động Set QC'}>
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 18, fontSize: 15 }}>
                   {isEN
                     ? 'Automatically create ads from Facebook posts — save up to 90% of manual ad setup time.'
@@ -678,7 +627,7 @@ export default function HuongDan() {
 
             {/* 8 — Tab Thông báo */}
             <Reveal delay={40}>
-              <SectionCard id="thong-bao" title={isEN ? '8. Notifications Tab' : '8. Tab Thông báo'}>
+              <SectionCard id="thong-bao" title={isEN ? '7. Notifications Tab' : '7. Tab Thông báo'}>
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
                   {isEN
                     ? 'Receive instant notifications via Telegram or Lark when important events occur.'
@@ -714,7 +663,7 @@ export default function HuongDan() {
 
             {/* 9 — Tab Nhân viên */}
             <Reveal delay={40}>
-              <SectionCard id="nhan-vien" title={isEN ? '9. Staff Tab' : '9. Tab Nhân viên'}>
+              <SectionCard id="nhan-vien" title={isEN ? '8. Staff Tab' : '8. Tab Nhân viên'}>
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
                   {isEN
                     ? 'Manage staff accounts, set access permissions and monitor activity.'
@@ -761,13 +710,13 @@ export default function HuongDan() {
               </SectionCard>
             </Reveal>
 
-            {/* 10 — Tab Affiliate & Mua Gói (MỚI) */}
+            {/* 9 — Tab Mua Gói */}
             <Reveal delay={40}>
-              <SectionCard id="affiliate" title={isEN ? '10. Affiliate & Plans Tab' : '10. Tab Affiliate & Mua Gói'}>
+              <SectionCard id="mua-goi" title={isEN ? '9. Plans Tab' : '9. Tab Mua Gói'}>
                 <p style={{ color: '#64748b', lineHeight: 1.75, marginTop: 0, marginBottom: 0, fontSize: 15 }}>
                   {isEN
-                    ? 'Upgrade your account and earn commissions by referring friends.'
-                    : 'Nâng cấp tài khoản và kiếm hoa hồng bằng cách giới thiệu bạn bè.'}
+                    ? 'Upgrade your account to unlock more features.'
+                    : 'Nâng cấp tài khoản để mở khoá thêm tính năng.'}
                 </p>
 
                 <SubHeading>{isEN ? 'Purchase / Upgrade Plan' : 'Mua gói / Nâng cấp'}</SubHeading>
@@ -776,19 +725,6 @@ export default function HuongDan() {
                     ? 'Go to the Buy Plan page, select a suitable plan (Personal, Business, or Agency). The system supports automatic QR code payment via PayOS. Your account will be upgraded instantly after successful payment.'
                     : 'Vào trang Mua Gói, chọn gói phù hợp (Personal, Business hoặc Agency). Hệ thống hỗ trợ thanh toán quét mã QR tự động qua PayOS. Tài khoản sẽ tự động kích hoạt ngay sau khi thanh toán thành công.'}
                 </p>
-
-                <SubHeading>{isEN ? 'Affiliate Program' : 'Chương trình Affiliate'}</SubHeading>
-                <BulletList items={isEN ? [
-                  'Requirement: Must have a Personal plan or higher.',
-                  'Commissions: 10-15% for new registrations (depending on your plan), and 3% for renewals.',
-                  'How to earn: Copy your Referral link and share it. When users sign up and purchase a plan, you receive commission.',
-                  'Payout: Provide your bank details in the Affiliate tab to receive monthly payouts.',
-                ] : [
-                  'Điều kiện: Yêu cầu có gói Personal trở lên.',
-                  'Hoa hồng: 10-15% cho lượt đăng ký mới (tùy gói của bạn), và 3% cho lượt gia hạn.',
-                  'Cách làm: Copy link giới thiệu (Ref link) và chia sẻ. Khi người dùng đăng ký và mua gói, bạn sẽ nhận được hoa hồng.',
-                  'Nhận tiền: Điền thông tin ngân hàng trong tab Affiliate để nhận thanh toán định kỳ.',
-                ]} />
               </SectionCard>
             </Reveal>
 

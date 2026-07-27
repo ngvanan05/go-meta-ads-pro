@@ -71,7 +71,7 @@ export default async function handler(req, res) {
   // ─── REGISTER ───────────────────────────────────────────────
   if (action === 'register') {
     if (req.method !== 'POST') return res.status(405).end()
-    const { email, password, name, phone, referral_code, otp } = req.body || {}
+    const { email, password, name, phone, otp } = req.body || {}
     if (!email || !password || !name)
       return res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin' })
     if (!phone || !/^[0-9]{9,11}$/.test(phone.replace(/\s/g, '')))
@@ -95,18 +95,6 @@ export default async function handler(req, res) {
     const { data: existing } = await db.from('users').select('id').eq('email', emailLower).single()
     if (existing) return res.status(409).json({ error: 'Email đã được đăng ký' })
 
-    // Verify referral code if provided — must be valid or registration fails
-    let referredBy = null
-    if (referral_code?.trim()) {
-      const { data: aff } = await db.from('affiliates')
-        .select('referral_code')
-        .eq('referral_code', referral_code.trim().toUpperCase())
-        .eq('status', 'active')
-        .single()
-      if (!aff) return res.status(400).json({ error: 'Mã giới thiệu không hợp lệ hoặc không còn hoạt động. Vui lòng kiểm tra lại hoặc để trống.' })
-      referredBy = referral_code.trim().toUpperCase()
-    }
-
     const { data: user, error } = await db.from('users').insert({
       email: emailLower,
       password_hash: await hashPassword(password),
@@ -114,7 +102,6 @@ export default async function handler(req, res) {
       phone: phone.trim(),
       plan: 'trial',
       status: 'active',
-      referred_by: referredBy,
       expire_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // trial 3 ngày
     }).select('id,email,name,plan,status,expire_at,avatar,phone').single()
 

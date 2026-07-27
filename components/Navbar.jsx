@@ -16,7 +16,6 @@ export default function Navbar() {
     [t.nav.features,  '/#features'],
     [t.nav.pricing,   '/#pricing'],
     [t.nav.guide,     '/huong-dan'],
-    [t.nav.affiliate, '/affiliate'],
     [t.nav.dashboard || 'Dashboard', '/dashboard'],
   ]
 

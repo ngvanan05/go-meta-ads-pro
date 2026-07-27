@@ -223,7 +223,6 @@ const MENU = [
   null,
   { id: 'web_users',       icon: '🌐', label: 'Web Users (SaaS)' },
   { id: 'web_tickets',     icon: '🎫', label: 'Support Tickets' },
-  { id: 'web_affiliates',  icon: '🤝', label: 'Affiliates (SaaS)' },
   { id: 'policycheck',     icon: '🛡️', label: 'Kiểm tra Vi phạm' },
   { id: 'ai_knowledge',    icon: '🧠', label: 'AI Knowledge' },
   { id: 'pixels',          icon: '📈', label: 'Tracking Pixels' },

@@ -6,11 +6,10 @@ import { useAuth } from '../lib/AuthContext'
 import { useLang } from '../lib/LangContext'
 import { isPlanAllowed } from '../lib/planLimits'
 import pkg from '../package.json'
-import { LayoutDashboard, Coins, BarChart3, HeartHandshake, Settings2, ClipboardList, ShieldCheck, Bell, Users, Handshake, LifeBuoy, BookOpen, Sun, Moon, LogOut, Link as LinkIcon, ChevronLeft, ChevronRight, Lock, CheckCircle2 } from 'lucide-react'
+import { LayoutDashboard, BarChart3, HeartHandshake, Settings2, ClipboardList, ShieldCheck, Bell, Users, LifeBuoy, BookOpen, Sun, Moon, LogOut, Link as LinkIcon, ChevronLeft, ChevronRight, Lock, CheckCircle2 } from 'lucide-react'
 
 const NAV_ICONS = {
   campaigns: LayoutDashboard,
-  profit: Coins,
   report: BarChart3,
   autocare: HeartHandshake,
   autoset: Settings2,
@@ -18,7 +17,6 @@ const NAV_ICONS = {
   policycheck: ShieldCheck,
   notifications: Bell,
   team: Users,
-  affiliate: Handshake,
   support: LifeBuoy,
   guide: BookOpen,
 }
@@ -27,7 +25,6 @@ function getNav(dt) {
   const n = dt.nav || {}
   return [
     { href: '/dashboard',             iconKey: 'campaigns',    labelKey: 'campaigns',    needFb: true,  feature: 'campaigns'     },
-    { href: '/dashboard/profit',      iconKey: 'profit',       labelKey: 'profit',       needFb: false, feature: 'profit'        },
     { href: '/dashboard/report',      iconKey: 'report',       labelKey: 'report',       needFb: true,  feature: 'report'        },
     { href: '/dashboard/autocare',    iconKey: 'autocare',     labelKey: 'autocare',     needFb: true,  feature: 'autocare'      },
     { href: '/dashboard/autoset',     iconKey: 'autoset',      labelKey: 'autoset',      needFb: true,  feature: 'autoset'       },
@@ -36,7 +33,6 @@ function getNav(dt) {
     { divider: true },
     { href: '/dashboard/notifications',iconKey:'notifications', labelKey: 'notifications', needFb: true, feature: 'notifications' },
     { href: '/dashboard/team',        iconKey: 'team',          labelKey: 'team',          needFb: false, feature: 'team'         },
-    { href: '/dashboard/affiliate',   iconKey: 'affiliate',     labelKey: 'affiliate',     needFb: false, feature: 'affiliate'    },
     { divider: true },
     { href: '/dashboard/support',     iconKey: 'support',       labelKey: 'support',       needFb: false, feature: 'support'      },
     { href: 'https://adsmeta.gonetwork.vn/huong-dan', iconKey: 'guide', labelKey: 'guide', external: true },
@@ -140,10 +136,10 @@ export default function DashboardLayout({ children, title = 'Dashboard' }) {
                 // Lock menus based on role
                 let roleLocked = false
                 if (item.feature) {
-                  if (isViewer && !['campaigns', 'profit', 'report', 'support'].includes(item.feature)) {
+                  if (isViewer && !['campaigns', 'report', 'support'].includes(item.feature)) {
                     roleLocked = true
                   }
-                  if (isManager && !['campaigns', 'profit', 'report', 'autoset', 'policycheck', 'support'].includes(item.feature)) {
+                  if (isManager && !['campaigns', 'report', 'autoset', 'policycheck', 'support'].includes(item.feature)) {
                     roleLocked = true
                   }
                 }

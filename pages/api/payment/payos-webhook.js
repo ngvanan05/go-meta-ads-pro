@@ -1,6 +1,5 @@
 import { PayOS } from '@payos/node'
 import { getSupabase } from '../../../lib/supabase'
-import { AFFILIATE_COMMISSION } from '../../../lib/planLimits'
 
 const LARK_WEBHOOK = 'https://open.larksuite.com/open-apis/bot/v2/hook/23c53186-2208-4c29-9985-4a6bd836c88a'
 
@@ -72,7 +71,7 @@ export default async function handler(req, res) {
 
     // Get user
     const { data: dbUser } = await sb.from('users')
-      .select('id,email,name,plan,expire_at,referred_by')
+      .select('id,email,name,plan,expire_at')
       .eq('id', order.user_id)
       .single()
 
@@ -91,39 +90,6 @@ export default async function handler(req, res) {
       plan: order.plan,
       expire_at: newExpire.toISOString(),
     }).eq('id', order.user_id)
-
-    // Handle affiliate commission
-    if (dbUser.referred_by) {
-      try {
-        const { data: affiliate } = await sb.from('affiliates')
-          .select('id,pending_earned')
-          .eq('referral_code', dbUser.referred_by)
-          .eq('status', 'active')
-          .single()
-
-        if (affiliate) {
-          const rates = AFFILIATE_COMMISSION[order.plan] || AFFILIATE_COMMISSION.personal
-          const rate = isRenewal ? rates.renewal : rates.new
-          const commission = Math.round(order.amount * rate)
-
-          await sb.from('affiliate_conversions').insert({
-            affiliate_id: affiliate.id,
-            referred_user_id: order.user_id,
-            order_id: order.id,
-            plan: order.plan,
-            amount: order.amount,
-            commission,
-            rate,
-            type: isRenewal ? 'renewal' : 'new',
-            status: 'pending',
-          })
-
-          await sb.from('affiliates').update({
-            pending_earned: (affiliate.pending_earned || 0) + commission,
-          }).eq('id', affiliate.id)
-        }
-      } catch {}
-    }
 
     sendLark('💰 Thanh toán thành công — PayOS', [
       ['Email', dbUser.email],

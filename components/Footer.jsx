@@ -13,7 +13,7 @@ export default function Footer() {
   const sections = [
     [f.productLabel  || f.product  || 'Sản phẩm',  normalizeLinks(f.productLinks)  || [['Tính năng','/#features'],['Bảng giá','/#pricing'],['Tải xuống','/tai-xuong'],['Hướng dẫn','/huong-dan']]],
     [f.supportLabel  || f.support  || 'Hỗ trợ',    normalizeLinks(f.supportLinks)  || [['Tra cứu key','/quan-ly'],['Reset thiết bị','/quan-ly'],['Zalo hỗ trợ','https://zalo.me'],['Liên hệ','mailto:admin@gonetwork.vn']]],
-    [f.businessLabel || f.business || 'Kinh doanh', normalizeLinks(f.businessLinks) || [['Mua gói','/mua-goi'],['Affiliate','/affiliate'],['Tra cứu','/quan-ly'],['Nâng cấp','/mua-goi']]],
+    [f.businessLabel || f.business || 'Kinh doanh', normalizeLinks(f.businessLinks) || [['Mua gói','/mua-goi'],['Tra cứu','/quan-ly'],['Nâng cấp','/mua-goi']]],
   ]
 
   return (

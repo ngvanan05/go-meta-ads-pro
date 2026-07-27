@@ -15,8 +15,6 @@ async function handler(req, res) {
       { count: ticketsTotal },
       { count: ticketsOpen },
       { count: ticketsResolved },
-      { count: affiliatesTotal },
-      { data: conversions },
       { count: policyChecks },
       { data: siteSettings }
     ] = await Promise.all([
@@ -26,19 +24,9 @@ async function handler(req, res) {
       sb.from('support_threads').select('*', { count: 'exact', head: true }),
       sb.from('support_threads').select('*', { count: 'exact', head: true }).eq('status', 'open'),
       sb.from('support_threads').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
-      sb.from('affiliates').select('*', { count: 'exact', head: true }),
-      sb.from('affiliate_conversions').select('status, commission_amount'),
       sb.from('policy_check_logs').select('*', { count: 'exact', head: true }),
       sb.from('site_settings').select('value').eq('key', 'ai_knowledge_prompts').single()
     ])
-
-    // Affiliate revenue calculation
-    let pendingCommission = 0
-    let confirmedCommission = 0
-    ;(conversions || []).forEach(c => {
-      if (c.status === 'pending') pendingCommission += (c.commission_amount || 0)
-      if (c.status === 'confirmed') confirmedCommission += (c.commission_amount || 0)
-    })
 
     // AI Knowledge stats
     let aiDocsActive = 0
@@ -76,11 +64,6 @@ async function handler(req, res) {
           total: ticketsTotal || 0,
           open: ticketsOpen || 0,
           resolved: ticketsResolved || 0
-        },
-        affiliates: {
-          total: affiliatesTotal || 0,
-          pendingCommission,
-          confirmedCommission
         },
         policy: {
           checks: policyChecks || 0,

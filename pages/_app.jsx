@@ -5,7 +5,6 @@ import { AdminAuthProvider } from '../lib/AdminAuthContext'
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
-import { saveReferralCode, trackReferralClick } from '../lib/affiliateTrack'
 
 function PixelInjector() {
   const injected = useRef(false)
@@ -98,16 +97,6 @@ export default function App({ Component, pageProps }) {
   const router = useRouter()
   const isAdmin     = router.pathname.startsWith('/admin')
   const isDashboard = router.pathname.startsWith('/dashboard') || router.pathname.startsWith('/settings')
-
-  // Đọc ?ref= từ URL và lưu cookie affiliate 30 ngày
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const ref = params.get('ref')
-    if (ref) {
-      saveReferralCode(ref)
-      trackReferralClick(ref)
-    }
-  }, [])
 
   const content = (
     <>

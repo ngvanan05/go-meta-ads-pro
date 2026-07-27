@@ -11,7 +11,7 @@ export default function Register() {
   const router = useRouter()
   const { lang, setLang, t } = useLang()
   const tr = t.auth?.register || {}
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '', referral_code: '', otp: '' })
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '', otp: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -22,11 +22,6 @@ export default function Register() {
   const [otpError, setOtpError] = useState('')
   const [countdown, setCountdown] = useState(0)
   const countdownRef = useRef(null)
-
-  useEffect(() => {
-    const ref = router.query.ref
-    if (ref) setForm(f => ({ ...f, referral_code: ref }))
-  }, [router.query.ref])
 
   useEffect(() => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current) }
@@ -92,7 +87,7 @@ export default function Register() {
     if (!form.phone.trim()) return setError(tr.errPhoneReq || 'Vui lòng nhập số điện thoại')
     setLoading(true)
     try {
-      await register(form.email, form.password, form.name, form.phone, form.referral_code, form.otp)
+      await register(form.email, form.password, form.name, form.phone, form.otp)
       router.push('/dashboard')
     } catch (err) {
       setError(err.message)
@@ -179,12 +174,6 @@ export default function Register() {
               <input type="password" placeholder={tr.confirmPh || 'Nhập lại mật khẩu'} autoComplete="new-password"
                 value={form.confirm} onChange={e => setForm(f => ({...f, confirm: e.target.value}))} required />
             </div>
-            <div className="field">
-              <label>{tr.referral || 'Mã giới thiệu'} <span className="field-hint">{tr.referralHint || '(tùy chọn)'}</span></label>
-              <input type="text" placeholder={tr.referralPh || 'Nhập mã nếu có'} style={{ textTransform: 'uppercase' }}
-                value={form.referral_code} onChange={e => setForm(f => ({...f, referral_code: e.target.value.toUpperCase()}))} />
-            </div>
-
             {error && <div className="err-msg">{error}</div>}
 
             <button type="submit" className="submit-btn" disabled={loading || !otpVerified}>

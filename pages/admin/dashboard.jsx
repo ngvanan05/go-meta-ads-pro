@@ -116,21 +116,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </AdminCard>
-            
-            {/* Thống kê Affiliates */}
-            <AdminCard noPadding style={{ padding: '16px', minWidth: 180 }}>
-              <h3 style={{ fontSize: 12, color: 'var(--mut)', textTransform: 'uppercase', marginBottom: 12 }}>Affiliates</h3>
-              <div style={{ display: 'flex', gap: 14 }}>
-                <div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--txt)' }}>{stats?.affiliates?.total || 0}</div>
-                  <div style={{ fontSize: 11, color: 'var(--mut)' }}>Đối tác</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--orange)', marginTop: 4 }}>{(stats?.affiliates?.pendingCommission || 0).toLocaleString()}đ</div>
-                  <div style={{ fontSize: 11, color: 'var(--mut)' }}>Chờ duyệt</div>
-                </div>
-              </div>
-            </AdminCard>
 
             {/* Thống kê Policy */}
             <AdminCard noPadding style={{ padding: '16px', minWidth: 180 }}>
