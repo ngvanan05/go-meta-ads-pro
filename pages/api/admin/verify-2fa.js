@@ -32,7 +32,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ ok: false, error: '2FA chưa được bật cho tài khoản này' })
   }
 
-  const secret = decryptToken(adminUser.totp_secret)
+  let secret
+  try {
+    secret = decryptToken(adminUser.totp_secret)
+  } catch (err) {
+    console.error('verify-2fa decryptToken error:', err)
+    return res.status(500).json({ ok: false, error: 'Lỗi cấu hình máy chủ. Vui lòng liên hệ admin.' })
+  }
+
   if (!verifyTotp(secret, code)) {
     await recordFailure(lockId, { maxAttempts: 5, windowMinutes: 10, lockMinutes: 10 })
     return res.status(401).json({ ok: false, error: 'Mã xác thực không đúng' })

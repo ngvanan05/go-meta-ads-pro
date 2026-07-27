@@ -22,51 +22,56 @@ async function handler(req, res) {
     return res.json({ ok: true, enabled: !!admin.totp_enabled })
   }
 
-  if (action === 'setup') {
-    if (admin.totp_enabled) return res.status(400).json({ ok: false, error: '2FA đã được bật. Tắt trước khi thiết lập lại.' })
-    const secret = generateBase32Secret()
-    await db.from('admin_users').update({ totp_pending_secret: encryptToken(secret) }).eq('id', adminId)
-    return res.json({
-      ok: true,
-      secret,
-      otpauth_uri: buildOtpauthUri(secret, admin.email),
-    })
-  }
+  try {
+    if (action === 'setup') {
+      if (admin.totp_enabled) return res.status(400).json({ ok: false, error: '2FA đã được bật. Tắt trước khi thiết lập lại.' })
+      const secret = generateBase32Secret()
+      await db.from('admin_users').update({ totp_pending_secret: encryptToken(secret) }).eq('id', adminId)
+      return res.json({
+        ok: true,
+        secret,
+        otpauth_uri: buildOtpauthUri(secret, admin.email),
+      })
+    }
 
-  if (action === 'enable') {
-    const { code } = req.body
-    if (!admin.totp_pending_secret) return res.status(400).json({ ok: false, error: 'Chưa khởi tạo thiết lập 2FA. Bấm "Thiết lập" trước.' })
-    const pendingSecret = decryptToken(admin.totp_pending_secret)
-    if (!verifyTotp(pendingSecret, code)) return res.status(400).json({ ok: false, error: 'Mã xác thực không đúng' })
+    if (action === 'enable') {
+      const { code } = req.body
+      if (!admin.totp_pending_secret) return res.status(400).json({ ok: false, error: 'Chưa khởi tạo thiết lập 2FA. Bấm "Thiết lập" trước.' })
+      const pendingSecret = decryptToken(admin.totp_pending_secret)
+      if (!verifyTotp(pendingSecret, code)) return res.status(400).json({ ok: false, error: 'Mã xác thực không đúng' })
 
-    await db.from('admin_users').update({
-      totp_secret: encryptToken(pendingSecret),
-      totp_enabled: true,
-      totp_pending_secret: null,
-    }).eq('id', adminId)
+      await db.from('admin_users').update({
+        totp_secret: encryptToken(pendingSecret),
+        totp_enabled: true,
+        totp_pending_secret: null,
+      }).eq('id', adminId)
 
-    await logAudit({ req, actorType: 'admin', actorId: admin.id, actorEmail: admin.email, action: 'admin_2fa_enable' })
-    return res.json({ ok: true })
-  }
+      await logAudit({ req, actorType: 'admin', actorId: admin.id, actorEmail: admin.email, action: 'admin_2fa_enable' })
+      return res.json({ ok: true })
+    }
 
-  if (action === 'disable') {
-    const { password, code } = req.body
-    if (!admin.totp_enabled) return res.status(400).json({ ok: false, error: '2FA chưa được bật' })
+    if (action === 'disable') {
+      const { password, code } = req.body
+      if (!admin.totp_enabled) return res.status(400).json({ ok: false, error: '2FA chưa được bật' })
 
-    const passOk = await bcrypt.compare(password || '', admin.password_hash)
-    if (!passOk) return res.status(401).json({ ok: false, error: 'Mật khẩu không đúng' })
+      const passOk = await bcrypt.compare(password || '', admin.password_hash)
+      if (!passOk) return res.status(401).json({ ok: false, error: 'Mật khẩu không đúng' })
 
-    const currentSecret = decryptToken(admin.totp_secret)
-    if (!verifyTotp(currentSecret, code)) return res.status(400).json({ ok: false, error: 'Mã xác thực không đúng' })
+      const currentSecret = decryptToken(admin.totp_secret)
+      if (!verifyTotp(currentSecret, code)) return res.status(400).json({ ok: false, error: 'Mã xác thực không đúng' })
 
-    await db.from('admin_users').update({
-      totp_secret: null,
-      totp_enabled: false,
-      totp_pending_secret: null,
-    }).eq('id', adminId)
+      await db.from('admin_users').update({
+        totp_secret: null,
+        totp_enabled: false,
+        totp_pending_secret: null,
+      }).eq('id', adminId)
 
-    await logAudit({ req, actorType: 'admin', actorId: admin.id, actorEmail: admin.email, action: 'admin_2fa_disable' })
-    return res.json({ ok: true })
+      await logAudit({ req, actorType: 'admin', actorId: admin.id, actorEmail: admin.email, action: 'admin_2fa_disable' })
+      return res.json({ ok: true })
+    }
+  } catch (err) {
+    console.error('admin/2fa error:', err)
+    return res.status(500).json({ ok: false, error: 'Lỗi cấu hình máy chủ. Vui lòng liên hệ admin.' })
   }
 
   return res.status(400).json({ ok: false, error: 'Invalid action' })
