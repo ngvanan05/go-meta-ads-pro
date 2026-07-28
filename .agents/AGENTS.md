@@ -1,1 +1,0 @@
-Rule: Do NOT automatically commit or push code to GitHub. Only commit when explicitly instructed by the user.
