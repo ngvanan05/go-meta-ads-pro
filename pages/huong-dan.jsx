@@ -35,11 +35,11 @@ function SectionCard({ id, title, badge, children }) {
   return (
     <div id={id} style={{ marginBottom: 32 }}>
       <div style={{
-        borderLeft: '4px solid #0c2a72',
         background: '#ffffff',
-        borderRadius: '0 14px 14px 0',
+        border: '1px solid rgba(12,42,114,0.08)',
+        borderRadius: 14,
         padding: '28px 32px',
-        boxShadow: '0 4px 20px rgba(12,42,114,0.10)',
+        boxShadow: '0 4px 20px rgba(12,42,114,0.08)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
           <h2 style={{
@@ -232,8 +232,8 @@ export default function HuongDan() {
       <Head>
         <title>Go Meta Ads Pro</title>
         <meta name="description" content={isEN
-          ? 'Detailed guide on how to install and use the Go Meta Ads Pro Chrome Extension for efficient Facebook Ads management.'
-          : 'Hướng dẫn chi tiết cách cài đặt và sử dụng Go Meta Ads Pro Chrome Extension để quản lý Facebook Ads hiệu quả.'
+          ? 'Detailed guide on how to set up and use the Go Meta Ads Pro web dashboard for efficient Facebook Ads management.'
+          : 'Hướng dẫn chi tiết cách thiết lập và sử dụng nền tảng web Go Meta Ads Pro để quản lý Facebook Ads hiệu quả.'
         } />
       </Head>
       <Navbar />

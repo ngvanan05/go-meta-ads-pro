@@ -5,7 +5,25 @@ import { Badge, Spinner, ErrorBox, CopyButton, EmptyState, AdminPageHeader, Admi
 import { Ticket as TicketIcon, RefreshCw, Trash2, Send, Paperclip } from 'lucide-react'
 import { adminLocalFetch, apiPost } from '../../lib/adminUtils'
 
-
+async function uploadImageWeb(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+      try {
+        const r = await fetch('/api/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_base64: e.target.result }),
+        })
+        const d = await r.json()
+        if (!d.ok) throw new Error(d.error || 'Upload thất bại')
+        resolve({ url: d.url, thumbnail: d.thumbnail || d.url })
+      } catch (err) { reject(err) }
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
 
 function WebTicketsTab() {
   const [tickets, setTickets] = useState([])
@@ -99,7 +117,7 @@ function WebTicketsTab() {
     <div>
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, background: toast.type === 'error' ? 'var(--red)' : 'var(--grn)', color: '#fff', borderRadius: 10, padding: '12px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,.25)' }}>{toast.msg}</div>}
 
-      <AdminPageHeader title="Support Tickets (Web)" icon={TicketIcon} />
+      <AdminPageHeader title="Ticket hỗ trợ" icon={TicketIcon} />
 
       {/* Filter */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -232,7 +250,7 @@ const MENU = [
 
 export default function Page() {
   return (
-    <AdminLayout title="Support Tickets">
+    <AdminLayout title="Ticket hỗ trợ">
       <WebTicketsTab />
     </AdminLayout>
   )
