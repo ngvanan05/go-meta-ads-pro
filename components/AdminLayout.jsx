@@ -20,11 +20,11 @@ import {
 
 const ADMIN_NAV = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
-  { href: '/admin/users',     icon: Users,           label: 'Web Users' },
-  { href: '/admin/tickets',   icon: Ticket,          label: 'Support Tickets' },
+  { href: '/admin/users',     icon: Users,           label: 'Người dùng' },
+  { href: '/admin/tickets',   icon: Ticket,          label: 'Ticket hỗ trợ' },
   { divider: true },
   { href: '/admin/policy',    icon: ShieldCheck,     label: 'Kiểm tra Vi phạm' },
-  { href: '/admin/ai',        icon: Brain,           label: 'AI Knowledge' },
+  { href: '/admin/ai',        icon: Brain,           label: 'Cơ sở tri thức AI' },
   { href: '/admin/smtp',      icon: Mail,            label: 'Email / SMTP' },
   { divider: true },
   { href: '/admin/security',  icon: KeyRound,        label: 'Bảo mật' },

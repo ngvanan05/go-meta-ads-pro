@@ -259,19 +259,19 @@ export default function AutoCare() {
   }
 
   if (!isPlanAllowed(user?.plan, 'autocare')) {
-    return <DashboardLayout title="Auto Care"><PlanGate feature="Auto Care" /></DashboardLayout>
+    return <DashboardLayout title="Lịch tắt/bật QC"><PlanGate feature="Lịch tắt/bật QC" /></DashboardLayout>
   }
-  
+
   if (user?.role === 'viewer' || user?.role === 'manager') {
     return (
-      <DashboardLayout title="Auto Care">
+      <DashboardLayout title="Lịch tắt/bật QC">
         <RestrictedView requiredRole="Admin" />
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout title="Auto Care">
+    <DashboardLayout title="Lịch tắt/bật QC">
       {toast && (
         <div style={{
           position: 'fixed', top: 16, right: 16, zIndex: 50,
@@ -288,7 +288,7 @@ export default function AutoCare() {
           <div className="ph-left">
             <span className="page-icon"><HeartHandshake size={22} /></span>
             <div>
-              <h1>Auto Care — Giờ tắt quảng cáo</h1>
+              <h1>Lịch tắt/bật quảng cáo theo khung giờ</h1>
               <p>Tạo nhiều quy tắc tự động tạm dừng và khôi phục chiến dịch theo khung giờ khác nhau</p>
             </div>
           </div>

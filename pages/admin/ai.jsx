@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import AdminLayout from '../../components/AdminLayout'
 import { Badge, Spinner, ErrorBox, CopyButton, EmptyState, AdminPageHeader, AdminCard, AdminButton, AdminInput, AdminSelect } from '../../components/AdminUI'
 import { adminLocalFetch, apiPost, AI_CATEGORIES } from '../../lib/adminUtils'
-import { Brain, FolderUp, Plus, Save, X, Edit, Trash2, Power, PowerOff, Lightbulb } from 'lucide-react'
+import { Brain, Plus, Save, X, Edit, Trash2, Power, PowerOff, Lightbulb } from 'lucide-react'
 
 
 
@@ -19,10 +19,6 @@ function AiKnowledgeTab() {
   const [formTitle, setFormTitle]   = useState('')
   const [formContent, setFormContent] = useState('')
   const [formCategory, setFormCategory] = useState('general')
-
-  // File upload state
-  const [fileLoading, setFileLoading] = useState(false)
-  const fileRef = useRef(null)
 
   async function fetchList() {
     setLoading(true)
@@ -61,52 +57,6 @@ function AiKnowledgeTab() {
     setList(l => l.filter(x => x.id !== id))
   }
 
-  // Đọc file và điền vào form content
-  async function handleFile(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setFileLoading(true)
-    try {
-      const name = file.name.toLowerCase()
-      let text = ''
-
-      if (name.endsWith('.txt') || name.endsWith('.md') || name.endsWith('.csv')) {
-        // Đọc trực tiếp
-        text = await file.text()
-      } else if (name.endsWith('.pdf')) {
-        // Đọc PDF cơ bản: tìm các chuỗi text trong binary
-        const buf = await file.arrayBuffer()
-        const bytes = new Uint8Array(buf)
-        const raw = new TextDecoder('latin1').decode(bytes)
-        // Extract text between BT/ET markers
-        const matches = raw.match(/BT[\s\S]*?ET/g) || []
-        const pieces = []
-        for (const block of matches) {
-          const strs = block.match(/\(((?:[^()\\]|\\.)*)\)\s*Tj/g) || []
-          strs.forEach(s => {
-            const m = s.match(/\(((?:[^()\\]|\\.)*)\)/)
-            if (m) pieces.push(m[1].replace(/\\n/g,' ').replace(/\\\(/g,'(').replace(/\\\)/g,')').trim())
-          })
-        }
-        text = pieces.filter(Boolean).join('\n') || '[PDF phức tạp — vui lòng copy và paste nội dung thủ công]'
-      } else if (name.endsWith('.docx')) {
-        // DOCX cần thư viện bên ngoài — yêu cầu copy paste thủ công
-        text = '[File DOCX — vui lòng mở file bằng Word, copy toàn bộ nội dung và paste vào đây]'
-      } else {
-        text = await file.text().catch(() => '[Không đọc được file này, vui lòng paste nội dung thủ công]')
-      }
-
-      setFormContent(text.slice(0, 50000)) // max 50K chars
-      if (!formTitle) setFormTitle(file.name.replace(/\.[^.]+$/, ''))
-      setShowForm(true)
-    } catch(e) {
-      alert('Lỗi đọc file: ' + e.message)
-    } finally {
-      setFileLoading(false)
-      if (fileRef.current) fileRef.current.value = ''
-    }
-  }
-
   const totalChars = list.reduce((s, x) => s + (x.content?.length || 0), 0)
   const activeCount = list.filter(x => x.is_active).length
 
@@ -116,17 +66,12 @@ function AiKnowledgeTab() {
     <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>
       {/* Header */}
       <AdminPageHeader 
-        title="AI Knowledge Base" 
+        title="Cơ sở tri thức AI"
         icon={Brain}
         description={`${activeCount}/${list.length} tài liệu đang bật · ${(totalChars/1000).toFixed(1)}K ký tự · AI đọc khi trả lời khách hàng`}
       >
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, background: 'rgba(59,130,246,0.1)', color: 'var(--blue)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-          {fileLoading ? <Spinner /> : <FolderUp size={16} />}
-          {fileLoading ? 'Đang đọc...' : 'Upload file'}
-          <input ref={fileRef} type="file" accept=".txt,.md,.pdf,.docx,.csv" onChange={handleFile} style={{ display: 'none' }} disabled={fileLoading} />
-        </label>
         <AdminButton onClick={openNew} icon={Plus}>
-          Thêm thủ công
+          Thêm tài liệu
         </AdminButton>
       </AdminPageHeader>
 
@@ -134,7 +79,7 @@ function AiKnowledgeTab() {
       <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 16px', marginBottom: 20, fontSize: 13, color: '#78350f', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <Lightbulb size={18} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
         <div>
-          <b>Mẹo:</b> Thêm FAQ, hướng dẫn sử dụng, chính sách... AI sẽ đọc tất cả tài liệu <b>đang bật</b> để trả lời khách hàng chính xác hơn. Upload .txt hoặc paste nội dung trực tiếp. PDF/DOCX phức tạp nên copy paste thủ công.
+          <b>Mẹo:</b> Thêm FAQ, hướng dẫn sử dụng, chính sách... AI sẽ đọc tất cả tài liệu <b>đang bật</b> để trả lời khách hàng chính xác hơn. Paste nội dung trực tiếp vào ô bên dưới.
         </div>
       </div>
 
@@ -222,7 +167,7 @@ function AiKnowledgeTab() {
 
 export default function Page() {
   return (
-    <AdminLayout title="AI Knowledge">
+    <AdminLayout title="Cơ sở tri thức AI">
       <AiKnowledgeTab />
     </AdminLayout>
   )

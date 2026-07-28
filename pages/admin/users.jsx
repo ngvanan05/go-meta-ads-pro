@@ -108,7 +108,7 @@ function WebUsersTab() {
         }}>{toast.msg}</div>
       )}
 
-      <AdminPageHeader title="Quản lý Web Users (SaaS)" icon={Users} />
+      <AdminPageHeader title="Quản lý Người dùng" icon={Users} />
 
       {/* Stats */}
       {stats && (
@@ -380,7 +380,7 @@ async function uploadImageWeb(file) {
 
 export default function Page() {
   return (
-    <AdminLayout title="Web Users">
+    <AdminLayout title="Người dùng">
       <WebUsersTab />
     </AdminLayout>
   )

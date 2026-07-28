@@ -139,12 +139,12 @@ export default function Report() {
   ]
 
   return (
-    <DashboardLayout title="Report">
+    <DashboardLayout title="Báo cáo">
       <div className="page-wrap">
         <div className="page-header">
           <span className="page-icon"><BarChart3 size={32} /></span>
           <div>
-            <h1>Report</h1>
+            <h1>Báo cáo</h1>
             <p>Báo cáo hiệu suất chiến dịch quảng cáo</p>
           </div>
         </div>
