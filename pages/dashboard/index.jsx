@@ -173,7 +173,8 @@ function SkeletonRows({ cols }) {
 function BudgetBar({ budget, spend, pct, currency }) {
   const isOver = pct > 100
   const color = pct >= 85 ? 'var(--red)' : pct >= 65 ? 'var(--ylw)' : 'var(--grn)'
-  const pctLabel = pct > 999 ? '>999%' : `${pct}%`
+  const isStale = pct > 300
+  const pctLabel = isStale ? 'NS vừa đổi' : `${pct}%`
   return (
     <div className="budget-cell">
       <div className="budget-text">
@@ -182,7 +183,9 @@ function BudgetBar({ budget, spend, pct, currency }) {
         {isOver && (
           <span
             className="budget-over-tip"
-            title="Chi tiêu đã vượt ngân sách ngày. Thường xảy ra khi ngân sách bị giảm trong ngày hoặc Meta phân phối linh hoạt."
+            title={isStale
+              ? 'Ngân sách vừa được điều chỉnh trong ngày nên % hiển thị không phản ánh đúng mức tiêu thực tế — không dùng số này để đánh giá.'
+              : 'Chi tiêu đã vượt ngân sách ngày. Thường xảy ra khi ngân sách bị giảm trong ngày hoặc Meta phân phối linh hoạt.'}
           >ⓘ</span>
         )}
       </div>
@@ -1032,7 +1035,7 @@ export default function DashboardHome() {
                   ) : pageItems.map(item => {
                     const isHighCpa = cpaMaxVal > 0 && item.cpa > cpaMaxVal
                     const isLowRoas = roasMinVal > 0 && item.roas > 0 && item.roas < roasMinVal
-                    const isHighBudget = (item.budget_util_pct || 0) >= 85
+                    const isHighBudget = (item.budget_util_pct || 0) >= 85 && (item.budget_util_pct || 0) <= 300
                     const isLosingMoney = (item.roas || 0) > 0 && item.roas < 1
                     const noConversion = (item.spend || 0) > 200000 && (item.purchases || 0) === 0
                     const selected = selectedIds.has(item.id)
@@ -1044,9 +1047,9 @@ export default function DashboardHome() {
                         </td>
 
                         <td className="td-name">
-                          <div className="adset-name-main">{item.name}</div>
+                          <div className="adset-name-main" title={item.name}>{item.name}</div>
                           {level === 'adset' && (
-                            <div className="adset-name-sub">
+                            <div className="adset-name-sub" title={item.campaign_name && !cols.campaign ? `${item.account_name} · ${item.campaign_name}` : item.account_name}>
                               {item.account_name}
                               {item.campaign_name && !cols.campaign && <> · {item.campaign_name}</>}
                             </div>
@@ -1060,7 +1063,7 @@ export default function DashboardHome() {
 
                         {level === 'adset' && cols.campaign && (
                           <td className="td-campaign">
-                            <div className="text-sm text-ellipsis">{item.campaign_name || '—'}</div>
+                            <div className="text-sm text-ellipsis" title={item.campaign_name || ''}>{item.campaign_name || '—'}</div>
                             <div className="sub-text status-badge"
                               style={{ color: item.campaign_effective_status === 'ACTIVE' ? 'var(--grn)' : 'var(--mut)' }}>
                               {item.campaign_effective_status || ''}

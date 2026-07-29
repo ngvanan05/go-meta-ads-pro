@@ -86,7 +86,7 @@ export default function PolicyCheck() {
         <header className="page-header" role="banner">
           <span className="ph-icon"><ShieldCheck size={32} /></span>
           <div>
-            <h1>Kiểm tra Vi phạm Chính sách Meta</h1>
+            <h1>Kiểm tra vi phạm chính sách Meta</h1>
             <p>AI phân tích nội dung quảng cáo — phát hiện rủi ro vi phạm trước khi chạy</p>
           </div>
         </header>
