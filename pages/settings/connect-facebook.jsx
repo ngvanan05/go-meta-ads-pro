@@ -5,6 +5,7 @@ import { useAuth } from '../../lib/AuthContext'
 import { useLang } from '../../lib/LangContext'
 import DashboardLayout from '../../components/DashboardLayout'
 import { Link2, CheckCircle2, AlertTriangle, BarChart3, Settings2, TrendingUp } from 'lucide-react'
+import { useConfirm } from '../../components/ConfirmModal'
 
 export default function ConnectFacebook() {
   const { user, refreshUser } = useAuth()
@@ -25,6 +26,7 @@ export default function ConnectFacebook() {
   const [status, setStatus] = useState('idle') // idle | loading | success | error
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+  const { confirm, confirmModal } = useConfirm()
 
   useEffect(() => {
     if (router.query.success === '1') {
@@ -40,6 +42,7 @@ export default function ConnectFacebook() {
   }, [router.query, tr])
 
   const fbConnected = user?.fb_connected
+  const canManageFb = user?.role === 'admin'
 
   async function handleConnect() {
     setStatus('loading')
@@ -66,7 +69,7 @@ export default function ConnectFacebook() {
   }
 
   async function handleDisconnect() {
-    if (!confirm(tr.disconnectConfirm || 'Ngắt kết nối Facebook sẽ tắt tất cả tính năng liên quan đến quảng cáo. Tiếp tục?')) return
+    if (!(await confirm(tr.disconnectConfirm || 'Ngắt kết nối Facebook sẽ tắt tất cả tính năng liên quan đến quảng cáo. Tiếp tục?', { danger: true, confirmLabel: 'Ngắt kết nối' }))) return
     setStatus('loading')
     try {
       const r = await fetch('/api/fb/disconnect', { method: 'POST' })
@@ -85,6 +88,7 @@ export default function ConnectFacebook() {
 
   return (
     <DashboardLayout title={tr.title || 'Kết nối Facebook Ads'}>
+      {confirmModal}
       <div className="cf-page">
 
         <div className="cf-header">
@@ -114,13 +118,17 @@ export default function ConnectFacebook() {
                 {user?.fb_email && <span> · {user.fb_email}</span>}
               </div>
             </div>
-            <button
-              className="disconnect-btn"
-              onClick={handleDisconnect}
-              disabled={status === 'loading'}
-            >
-              {status === 'loading' ? '...' : (tr.disconnect || 'Ngắt kết nối')}
-            </button>
+            {canManageFb ? (
+              <button
+                className="disconnect-btn"
+                onClick={handleDisconnect}
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' ? '...' : (tr.disconnect || 'Ngắt kết nối')}
+              </button>
+            ) : (
+              <span className="disconnect-locked-note">Chỉ chủ tài khoản mới có quyền ngắt kết nối</span>
+            )}
           </div>
         )}
 
@@ -211,6 +219,7 @@ export default function ConnectFacebook() {
         }
         .disconnect-btn:hover { background: rgba(255,69,96,.1); }
         .disconnect-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .disconnect-locked-note { font-size: 12px; color: var(--mut); white-space: nowrap; }
 
         /* Steps */
         .steps-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }

@@ -404,13 +404,6 @@ export default function HuongDan() {
                 <Step num={4} text={isEN
                   ? 'Go to the Login page — sign in with your registered email and password to access the Dashboard.'
                   : 'Vào trang Đăng nhập — điền email và mật khẩu để truy cập vào Dashboard.'} />
-                <Tip>
-                  {isEN ? (
-                    <>Forgot your password? Click on the "Forgot Password" link on the Login page to reset it via email.</>
-                  ) : (
-                    <>Quên mật khẩu? Click vào nút "Quên mật khẩu" ở trang Đăng nhập để thiết lập lại qua email.</>
-                  )}
-                </Tip>
               </SectionCard>
             </Reveal>
 

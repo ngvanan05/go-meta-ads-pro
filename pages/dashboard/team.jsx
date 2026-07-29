@@ -4,17 +4,36 @@ import RestrictedView from '../../components/RestrictedView'
 import { useAuth } from '../../lib/AuthContext'
 import Link from 'next/link'
 import { isPlanAllowed, getMaxTeamMembers } from '../../lib/planLimits'
-import { Users, Lock, UserPlus, User, ClipboardList, CheckCircle2, Loader2, X, Plus, ArrowRight } from 'lucide-react'
+import { useConfirm } from '../../components/ConfirmModal'
+import { useToast } from '../../components/Toast'
+import { Users, Lock, UserPlus, User, ClipboardList, CheckCircle2, Loader2, X, Plus, ArrowRight, KeyRound } from 'lucide-react'
+
+function randomPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  let pw = ''
+  for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)]
+  return pw
+}
 
 export default function Team() {
   const { user } = useAuth()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [addName, setAddName] = useState('')
   const [addEmail, setAddEmail] = useState('')
+  const [addPassword, setAddPassword] = useState('')
   const [addRole, setAddRole] = useState('viewer')
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [createdCreds, setCreatedCreds] = useState(null)
+  const [resettingId, setResettingId] = useState(null)
+  const [resetCreds, setResetCreds] = useState(null)
+  const { confirm, confirmModal } = useConfirm()
+  const { showToast, toastElement } = useToast()
+
+  function genPassword() {
+    setAddPassword(randomPassword())
+  }
 
   const plan = user?.plan || 'trial'
   const canUseTeam = isPlanAllowed(plan, 'team')
@@ -51,26 +70,27 @@ export default function Team() {
 
   async function handleAdd(e) {
     e.preventDefault()
-    if (!addEmail.trim()) return
+    if (!addEmail.trim() || !addPassword.trim()) return
+    if (addPassword.trim().length < 6) { setError('Mật khẩu tối thiểu 6 ký tự'); return }
     if (atLimit) { setError(`Gói ${plan} giới hạn ${maxMembers} nhân viên. Nâng cấp để thêm nhiều hơn.`); return }
-    setError(''); setSuccess(''); setAdding(true)
+    setError(''); setCreatedCreds(null); setAdding(true)
     try {
       const r = await fetch('/api/team', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add', email: addEmail.trim(), role: addRole })
+        body: JSON.stringify({ action: 'add', name: addName.trim(), email: addEmail.trim(), password: addPassword.trim(), role: addRole })
       })
       const d = await r.json()
-      if (!r.ok) { setError(d.error || 'Lỗi khi thêm thành viên'); return }
-      setSuccess(`Đã thêm ${addEmail} vào nhóm`)
-      setAddEmail('')
+      if (!r.ok) { setError(d.error || 'Lỗi khi tạo tài khoản'); return }
+      setCreatedCreds(d.credentials)
+      setAddName(''); setAddEmail(''); setAddPassword('')
       fetchMembers()
     } catch { setError('Lỗi kết nối mạng') }
     finally { setAdding(false) }
   }
 
   async function handleRemove(memberId, email) {
-    if (!confirm(`Xoá ${email} khỏi nhóm?`)) return
+    if (!(await confirm(`Xoá ${email} khỏi nhóm?`, { danger: true, confirmLabel: 'Xoá' }))) return
     try {
       const r = await fetch('/api/team', {
         method: 'POST',
@@ -81,11 +101,30 @@ export default function Team() {
     } catch {}
   }
 
+  async function handleResetPassword(memberId, email) {
+    if (!(await confirm(`Đặt lại mật khẩu cho ${email}? Mật khẩu cũ sẽ không còn dùng được.`, { confirmLabel: 'Đặt lại' }))) return
+    const newPassword = randomPassword()
+    setResettingId(memberId); setResetCreds(null)
+    try {
+      const r = await fetch('/api/team', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_password', member_id: memberId, new_password: newPassword })
+      })
+      const d = await r.json()
+      if (!r.ok) { showToast(d.error || 'Lỗi khi đặt lại mật khẩu', 'error'); return }
+      setResetCreds(d.credentials)
+    } catch { showToast('Lỗi kết nối mạng', 'error') }
+    finally { setResettingId(null) }
+  }
+
   const ROLE_LABELS = { admin: 'Admin', manager: 'Manager', viewer: 'Viewer' }
   const ROLE_COLORS = { admin: 'var(--primary)', manager: 'var(--blue)', viewer: 'var(--mut)' }
 
   return (
     <DashboardLayout title="Nhân viên">
+      {confirmModal}
+      {toastElement}
       <div className="team-page">
 
         <div className="page-header">
@@ -119,22 +158,53 @@ export default function Team() {
 
             {/* Add member form */}
             <div className="card add-card">
-              <div className="card-title"><UserPlus size={14} aria-hidden="true" /> Thêm thành viên</div>
-              <form className="add-form" onSubmit={handleAdd} aria-label="Thêm thành viên mới">
-                <input type="email" placeholder="Email nhân viên" className="add-email"
-                  value={addEmail} onChange={e => setAddEmail(e.target.value)} required
-                  disabled={atLimit} aria-label="Email nhân viên" />
-                <select className="add-role" value={addRole} onChange={e => setAddRole(e.target.value)} disabled={atLimit} aria-label="Vai trò thành viên">
-                  <option value="viewer">Viewer — Chỉ xem</option>
-                  <option value="manager">Manager — Xem & chỉnh sửa</option>
-                  <option value="admin">Admin — Toàn quyền</option>
-                </select>
+              <div className="card-title"><UserPlus size={14} aria-hidden="true" /> Tạo tài khoản nhân viên</div>
+              <form className="add-form" onSubmit={handleAdd} aria-label="Tạo tài khoản nhân viên mới">
+                <div className="form-row">
+                  <div className="fld-group">
+                    <label className="fld-label" htmlFor="tm-name">Tên nhân viên</label>
+                    <input id="tm-name" type="text" placeholder="VD: Nguyễn Văn A" className="fld"
+                      value={addName} onChange={e => setAddName(e.target.value)}
+                      disabled={atLimit} />
+                  </div>
+                  <div className="fld-group">
+                    <label className="fld-label" htmlFor="tm-email">Email đăng nhập</label>
+                    <input id="tm-email" type="email" placeholder="ten@email.com" className="fld"
+                      value={addEmail} onChange={e => setAddEmail(e.target.value)} required
+                      disabled={atLimit} />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="fld-group">
+                    <label className="fld-label" htmlFor="tm-pw">Mật khẩu (tối thiểu 6 ký tự)</label>
+                    <div className="pw-group">
+                      <input id="tm-pw" type="text" placeholder="Nhập hoặc tự sinh" className="fld pw-input"
+                        value={addPassword} onChange={e => setAddPassword(e.target.value)} required
+                        disabled={atLimit} />
+                      <button type="button" className="genpw-btn" onClick={genPassword} disabled={atLimit}>Tự sinh</button>
+                    </div>
+                  </div>
+                  <div className="fld-group">
+                    <label className="fld-label" htmlFor="tm-role">Vai trò</label>
+                    <select id="tm-role" className="fld" value={addRole} onChange={e => setAddRole(e.target.value)} disabled={atLimit}>
+                      <option value="viewer">Viewer — Chỉ xem</option>
+                      <option value="manager">Manager — Xem & chỉnh sửa</option>
+                      <option value="admin">Admin — Toàn quyền</option>
+                    </select>
+                  </div>
+                </div>
                 <button type="submit" className="add-btn" disabled={adding || atLimit}>
-                  {adding ? <Loader2 size={14} className="spin-icon" aria-hidden="true" /> : atLimit ? <><Lock size={14} aria-hidden="true" /> Đã đủ</> : <><Plus size={14} aria-hidden="true" /> Thêm</>}
+                  {adding ? <Loader2 size={14} className="spin-icon" aria-hidden="true" /> : atLimit ? <><Lock size={14} aria-hidden="true" /> Đã đủ</> : <><Plus size={14} aria-hidden="true" /> Tạo tài khoản</>}
                 </button>
               </form>
-              {error   && <div className="msg-err" role="alert">{error}</div>}
-              {success && <div className="msg-ok" role="status"><CheckCircle2 size={14} aria-hidden="true" /> {success}</div>}
+              {error && <div className="msg-err" role="alert">{error}</div>}
+              {createdCreds && (
+                <div className="msg-ok creds-box" role="status">
+                  <CheckCircle2 size={14} aria-hidden="true" /> Đã tạo tài khoản — gửi thông tin này cho nhân viên:
+                  <div className="creds-line">Email: <strong>{createdCreds.email}</strong></div>
+                  <div className="creds-line">Mật khẩu: <strong>{createdCreds.password}</strong></div>
+                </div>
+              )}
             </div>
 
             {/* Members list */}
@@ -162,9 +232,21 @@ export default function Team() {
                       <span className="member-role" style={{ color: ROLE_COLORS[m.role], background: ROLE_COLORS[m.role] + '18' }}>
                         {ROLE_LABELS[m.role] || m.role}
                       </span>
+                      {m.managed && (
+                        <button className="member-reset" onClick={() => handleResetPassword(m.id, m.email)} disabled={resettingId === m.id} title="Đặt lại mật khẩu" aria-label={`Đặt lại mật khẩu ${m.name || m.email}`}>
+                          {resettingId === m.id ? <Loader2 size={14} className="spin-icon" aria-hidden="true" /> : <KeyRound size={14} aria-hidden="true" />}
+                        </button>
+                      )}
                       <button className="member-remove" onClick={() => handleRemove(m.id, m.email)} title="Xoá thành viên" aria-label={`Xoá ${m.name || m.email}`}><X size={14} aria-hidden="true" /></button>
                     </div>
                   ))}
+                </div>
+              )}
+              {resetCreds && (
+                <div className="msg-ok creds-box" role="status">
+                  <CheckCircle2 size={14} aria-hidden="true" /> Đã đặt lại mật khẩu — gửi thông tin này cho nhân viên:
+                  <div className="creds-line">Email: <strong>{resetCreds.email}</strong></div>
+                  <div className="creds-line">Mật khẩu mới: <strong>{resetCreds.password}</strong></div>
                 </div>
               )}
             </div>
@@ -221,13 +303,31 @@ export default function Team() {
         .card-title { font-size: 13px; font-weight: 700; color: var(--txt); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
         .card-title svg { color: var(--blue); }
 
-        .add-form { display: flex; gap: 8px; flex-wrap: wrap; }
-        .add-email { flex: 1; min-width: 200px; background: var(--s2); border: 1.5px solid var(--bd); border-radius: 9px; padding: 10px 13px; font-size: 14px; color: var(--txt); outline: none; transition: border-color .15s; font-family: inherit; }
-        .add-email:focus { border-color: var(--primary); }
-        .add-email:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: var(--primary); }
-        .add-role { background: var(--s2); border: 1.5px solid var(--bd); border-radius: 9px; padding: 10px 13px; font-size: 14px; color: var(--txt); outline: none; cursor: pointer; font-family: inherit; transition: border-color .15s; }
-        .add-role:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: var(--primary); }
-        .add-btn { background: var(--primary); color: var(--s1); border: none; border-radius: 9px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+        .add-form { display: flex; flex-direction: column; gap: 14px; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: start; }
+        .fld-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .fld-label { font-size: 11px; font-weight: 600; color: var(--mut); text-transform: uppercase; letter-spacing: .4px; }
+        .fld {
+          width: 100%; min-width: 0; box-sizing: border-box;
+          background: var(--s2); border: 1.5px solid var(--bd); border-radius: 9px;
+          padding: 10px 13px; font-size: 14px; color: var(--txt); outline: none;
+          transition: border-color .15s; font-family: inherit;
+        }
+        select.fld { cursor: pointer; }
+        .fld:focus { border-color: var(--primary); }
+        .fld:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: var(--primary); }
+        .pw-group { display: flex; gap: 8px; min-width: 0; }
+        .pw-input { flex: 1; min-width: 0; }
+        .genpw-btn {
+          flex-shrink: 0; background: var(--s2); border: 1.5px solid var(--bd); border-radius: 9px;
+          padding: 0 14px; font-size: 13px; font-weight: 600; color: var(--txt);
+          cursor: pointer; white-space: nowrap; font-family: inherit;
+        }
+        .genpw-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .genpw-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .creds-box { flex-direction: column; align-items: flex-start; gap: 4px; background: var(--s2); border: 1px solid rgba(0,196,140,.3); border-radius: 9px; padding: 10px 14px; }
+        .creds-line { font-size: 13px; color: var(--txt); }
+        .add-btn { align-self: flex-start; background: var(--primary); color: var(--s1); border: none; border-radius: 9px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
         .add-btn:hover:not(:disabled) { opacity: .88; }
         .add-btn:disabled { opacity: .5; cursor: not-allowed; }
         .add-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
@@ -250,6 +350,10 @@ export default function Team() {
         .member-remove { background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 4px 8px; font-size: 12px; color: var(--mut); cursor: pointer; transition: all .15s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
         .member-remove:hover { border-color: var(--red); color: var(--red); }
         .member-remove:focus-visible { outline: 2px solid var(--red); outline-offset: 1px; }
+        .member-reset { background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 4px 8px; font-size: 12px; color: var(--mut); cursor: pointer; transition: all .15s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .member-reset:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+        .member-reset:disabled { opacity: .5; cursor: not-allowed; }
+        .member-reset:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 
         .perm-table { background: var(--s1); border: 1px solid var(--bd); border-radius: 14px; padding: 18px; }
         .pt-wrap { border: 1px solid var(--bd); border-radius: 10px; overflow: hidden; }
@@ -269,8 +373,7 @@ export default function Team() {
           .page-header { gap: 10px; margin-bottom: 20px; }
           h1 { font-size: 16px; }
           .upgrade-card { padding: 32px 16px; }
-          .add-form { flex-direction: column; }
-          .add-email { min-width: 0; }
+          .form-row { grid-template-columns: 1fr; }
           .member-row { gap: 8px; padding: 8px 4px; }
           .member-avatar { width: 32px; height: 32px; font-size: 12px; }
           .member-name { font-size: 13px; }
@@ -282,7 +385,7 @@ export default function Team() {
 
         @media (prefers-reduced-motion: reduce) {
           .spin-icon { animation: none; }
-          .uc-btn, .add-btn, .add-email, .add-role, .member-row, .member-remove { transition: none; }
+          .uc-btn, .add-btn, .fld, .member-row, .member-remove, .member-reset { transition: none; }
         }
       `}</style>
     </DashboardLayout>
