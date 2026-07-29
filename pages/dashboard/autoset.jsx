@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/AuthContext'
 import { fetcher } from '../../lib/fetcher'
 import { isPlanAllowed } from '../../lib/planLimits'
 import { Lock, Link2, Megaphone, MessageCircle, Lightbulb, Play, History, AlertTriangle, Rocket } from 'lucide-react'
+import { useConfirm } from '../../components/ConfirmModal'
 
 function PlanGate({ feature }) {
   return (
@@ -48,6 +49,7 @@ export default function AutoSet() {
   const [adAccounts, setAdAccounts] = useState([])
   const [selectedAccount, setSelectedAccount] = useState('')
   const [toast, setToast] = useState(null)
+  const { confirm, confirmModal } = useConfirm()
 
   const [step, setStep] = useState(1)
   const [insightText, setInsightText] = useState('')
@@ -224,7 +226,7 @@ export default function AutoSet() {
   }
 
   async function deleteHistory(id) {
-    if (!confirm('Bạn có chắc muốn xóa lịch sử này? Bài viết sẽ được giải phóng để tạo mới.')) return
+    if (!(await confirm('Bạn có chắc muốn xóa lịch sử này? Bài viết sẽ được giải phóng để tạo mới.', { danger: true, confirmLabel: 'Xoá' }))) return
     try {
       const r = await fetch('/api/fb/autoset-scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete_history', history_id: id }) })
       const d = await r.json()
@@ -346,6 +348,7 @@ export default function AutoSet() {
 
   return (
     <DashboardLayout title="Tự động tạo QC">
+      {confirmModal}
       {toast && <div className="local-toast" style={{ background: toast.type === 'error' ? '#ef4444' : '#10b981' }}>{toast.msg}</div>}
 
       <div className="page-wrap">

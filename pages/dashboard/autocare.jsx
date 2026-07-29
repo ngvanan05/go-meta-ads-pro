@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/AuthContext'
 import { fetcher } from '../../lib/fetcher'
 import { isPlanAllowed } from '../../lib/planLimits'
 import { Lock, Link2, HeartHandshake, Pencil, Trash2, Pause, Play, Info } from 'lucide-react'
+import { useConfirm } from '../../components/ConfirmModal'
 
 function PlanGate({ feature }) {
   return (
@@ -41,6 +42,7 @@ export default function AutoCare() {
   const [runningId, setRunningId] = useState(null)
   const [runResult, setRunResult] = useState(null)
   const [toast, setToast] = useState(null)
+  const { confirm, confirmModal } = useConfirm()
 
   // Campaign tree state
   const [campaigns, setCampaigns] = useState([])
@@ -208,7 +210,7 @@ export default function AutoCare() {
   }
 
   async function deleteRule(id, name) {
-    if (!confirm(`Xoá rule "${name}"?`)) return
+    if (!(await confirm(`Xoá rule "${name}"?`, { danger: true, confirmLabel: 'Xoá' }))) return
     await fetch('/api/fb/autocare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -272,6 +274,7 @@ export default function AutoCare() {
 
   return (
     <DashboardLayout title="Lịch tắt/bật QC">
+      {confirmModal}
       {toast && (
         <div style={{
           position: 'fixed', top: 16, right: 16, zIndex: 50,

@@ -4,6 +4,8 @@ import AdminLayout from '../../components/AdminLayout'
 import { Badge, Spinner, ErrorBox, CopyButton, EmptyState, AdminPageHeader, AdminCard, AdminButton, AdminInput } from '../../components/AdminUI'
 import { ShieldCheck, FileText, BarChart, Settings, Search, XCircle, Users, DollarSign, Save, RefreshCw, FlaskConical } from 'lucide-react'
 import { adminLocalFetch, apiPost } from '../../lib/adminUtils'
+import { useConfirm } from '../../components/ConfirmModal'
+import { useToast } from '../../components/Toast'
 
 const PC_INDUSTRIES = [
   { value: 'general', label: 'Tổng quát (mặc định)' },
@@ -29,7 +31,7 @@ function PolicyCheckTab() {
 
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', width: '100%' }}>
-      <AdminPageHeader title="AI Kiểm tra Vi phạm Chính sách Meta" icon={ShieldCheck} />
+      <AdminPageHeader title="AI Kiểm tra vi phạm chính sách Meta" icon={ShieldCheck} />
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         <button style={subBtnStyle(subTab === 'docs')} onClick={() => setSubTab('docs')}><FileText size={16} /> Tài liệu Chính sách</button>
         <button style={subBtnStyle(subTab === 'stats')} onClick={() => setSubTab('stats')}><BarChart size={16} /> Thống kê</button>
@@ -49,6 +51,8 @@ function PolicyDocsSubTab() {
   const [saving, setSaving]     = useState(false)
   const [meta, setMeta]         = useState(null)
   const [allDocs, setAllDocs]   = useState([])
+  const { confirm, confirmModal } = useConfirm()
+  const { showToast, toastElement } = useToast()
 
   async function fetchDocs() {
     setLoading(true)
@@ -58,7 +62,7 @@ function PolicyDocsSubTab() {
       const doc = (r.docs || []).find(d => d.industry === industry)
       if (doc) { setContent(doc.content); setMeta(doc) }
       else { setContent(''); setMeta(null) }
-    } catch (e) { alert('Lỗi tải: ' + e.message) } finally { setLoading(false) }
+    } catch (e) { showToast('Lỗi tải: ' + e.message, 'error') } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchDocs() }, [])
@@ -70,26 +74,28 @@ function PolicyDocsSubTab() {
   }, [industry, allDocs])
 
   async function handleSave() {
-    if (!content.trim()) { alert('Nội dung không được để trống'); return }
+    if (!content.trim()) { showToast('Nội dung không được để trống', 'error'); return }
     setSaving(true)
     try {
       await apiPost('/api/admin/policy',{ action: 'pc_save_doc', industry, content })
       await fetchDocs()
-      alert('✅ Đã lưu tài liệu chính sách')
-    } catch (e) { alert('Lỗi lưu: ' + e.message) } finally { setSaving(false) }
+      showToast('Đã lưu tài liệu chính sách')
+    } catch (e) { showToast('Lỗi lưu: ' + e.message, 'error') } finally { setSaving(false) }
   }
 
   async function handleReset() {
-    if (!confirm(`Reset tài liệu ngành "${industry}" về mặc định?`)) return
+    if (!(await confirm(`Reset tài liệu ngành "${industry}" về mặc định?`, { danger: true, confirmLabel: 'Reset' }))) return
     try {
       await apiPost('/api/admin/policy',{ action: 'pc_reset_doc', industry })
       await fetchDocs()
-      alert('✅ Đã reset về mặc định')
-    } catch (e) { alert('Lỗi: ' + e.message) }
+      showToast('Đã reset về mặc định')
+    } catch (e) { showToast('Lỗi: ' + e.message, 'error') }
   }
 
   return (
     <AdminCard>
+      {confirmModal}
+      {toastElement}
       <p style={{ fontSize: 13, color: 'var(--mut)', marginBottom: 16, lineHeight: 1.6 }}>
         Tài liệu này được AI đọc khi kiểm tra nội dung quảng cáo. Cập nhật khi Meta thay đổi policy hoặc cần tuỳ chỉnh cho từng ngành.
       </p>
@@ -127,6 +133,7 @@ function PolicyStatsSubTab() {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [range, setRange] = useState('7d')
+  const { showToast, toastElement } = useToast()
 
   async function fetchStats() {
     setLoading(true)
@@ -137,7 +144,7 @@ function PolicyStatsSubTab() {
       const to   = now.toISOString().slice(0, 10)
       const r = await apiPost('/api/admin/policy',{ action: 'pc_stats', from, to })
       setStats(r)
-    } catch (e) { alert('Lỗi tải stats: ' + e.message) } finally { setLoading(false) }
+    } catch (e) { showToast('Lỗi tải stats: ' + e.message, 'error') } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchStats() }, [range])
@@ -153,6 +160,7 @@ function PolicyStatsSubTab() {
 
   return (
     <AdminCard>
+      {toastElement}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
         {[['1d','Hôm nay'],['7d','7 ngày'],['30d','30 ngày']].map(([v, l]) => (
           <button key={v} onClick={() => setRange(v)} style={{ padding: '6px 14px', borderRadius: 7, border: '1px solid var(--bd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', background: range === v ? 'var(--blue)' : 'var(--s2)', color: range === v ? '#fff' : 'var(--mut)', fontFamily: 'inherit' }}>{l}</button>
@@ -197,13 +205,14 @@ function PolicyConfigSubTab() {
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
+  const { showToast, toastElement } = useToast()
 
   async function fetchConfig() {
     setLoading(true)
     try {
       const r = await apiPost('/api/admin/policy',{ action: 'pc_config_get' })
       setConfig(r.config || {})
-    } catch (e) { alert('Lỗi tải config: ' + e.message) } finally { setLoading(false) }
+    } catch (e) { showToast('Lỗi tải config: ' + e.message, 'error') } finally { setLoading(false) }
   }
 
   useEffect(() => { fetchConfig() }, [])
@@ -218,8 +227,8 @@ function PolicyConfigSubTab() {
         rate_limit_agency: parseInt(config.rateLimitAgency),
         enabled: config.enabled,
       })
-      alert('✅ Đã lưu cấu hình')
-    } catch (e) { alert('Lỗi lưu: ' + e.message) } finally { setSaving(false) }
+      showToast('Đã lưu cấu hình')
+    } catch (e) { showToast('Lỗi lưu: ' + e.message, 'error') } finally { setSaving(false) }
   }
 
   async function handleTest() {
@@ -250,6 +259,7 @@ function PolicyConfigSubTab() {
 
   return (
     <AdminCard>
+      {toastElement}
       {field('AI Model', (
         <select value={config?.model || ''} onChange={e => setConfig(c => ({ ...c, model: e.target.value }))} className="form-input">
           <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (rẻ, nhanh — khuyến nghị)</option>

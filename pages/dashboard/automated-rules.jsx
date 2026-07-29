@@ -6,6 +6,7 @@ import useSWR from 'swr'
 import { fetcher } from '../../lib/fetcher'
 import { isPlanAllowed } from '../../lib/planLimits'
 import { Settings2, Link2, Lock, Pencil, Trash2, Save, Eye, Play, Plus, History, Lightbulb, Pause, TrendingUp, TrendingDown, Bell as BellIcon } from 'lucide-react'
+import { useConfirm } from '../../components/ConfirmModal'
 
 function PlanGate({ feature }) {
   return (
@@ -108,6 +109,7 @@ export default function AutomatedRules() {
   const [running, setRunning] = useState(false)
   const [runResults, setRunResults] = useState(null)
   const [toast, setToast] = useState(null)
+  const { confirm, confirmModal } = useConfirm()
 
   // Campaign Tree state
   const [campaigns, setCampaigns] = useState([])
@@ -341,7 +343,7 @@ export default function AutomatedRules() {
   }
 
   async function deleteRule(id, name) {
-    if (!confirm(`Xoá rule "${name}"?`)) return
+    if (!(await confirm(`Xoá rule "${name}"?`, { danger: true, confirmLabel: 'Xoá' }))) return
     await fetch('/api/fb/autoset', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -391,6 +393,7 @@ export default function AutomatedRules() {
     <DashboardLayout title="Quy tắc tự động">
       <div className="as-page">
 
+        {confirmModal}
         {toast && (
           <div className={`local-toast ${toast.type || ''}`}>{toast.msg}</div>
         )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import AdminLayout from '../../components/AdminLayout'
 import { Spinner, EmptyState, AdminPageHeader, AdminTable, AdminCard, AdminButton, AdminInput, AdminSelect } from '../../components/AdminUI'
 import { Users, RefreshCw, ShieldCheck, Edit, Unlink, CheckCircle2 } from 'lucide-react'
+import { useConfirm } from '../../components/ConfirmModal'
 
 const PLAN_LABELS = { trial: 'Dùng thử', personal: 'Personal', business: 'Business', agency: 'Agency', 'ca-nhan': 'Cá nhân', 'doanh-nghiep': 'Doanh nghiệp' }
 const PLAN_COLORS = { trial: '#64748b', personal: '#3b82f6', business: '#8b5cf6', agency: '#ec4899', 'ca-nhan': '#3b82f6', 'doanh-nghiep': '#8b5cf6' }
@@ -23,6 +24,7 @@ function WebUsersTab() {
   const [prevPlan, setPrevPlan] = useState('')
   const [toast, setToast] = useState(null)
   const [page] = useState(1)
+  const { confirm, confirmModal } = useConfirm()
 
   const adminToken = typeof window !== 'undefined' ? atob(localStorage.getItem('gmap_admin_token') || '') : ''
 
@@ -78,14 +80,14 @@ function WebUsersTab() {
   }
 
   async function handleResetFb(user) {
-    if (!confirm(`Xoá kết nối Facebook của "${user.email}"?`)) return
+    if (!(await confirm(`Xoá kết nối Facebook của "${user.email}"?`, { danger: true, confirmLabel: 'Xoá' }))) return
     const d = await callApi('reset_fb', { user_id: user.id })
     if (d.ok) { showToast('Đã reset FB'); load() }
     else showToast(d.error || 'Lỗi', 'error')
   }
 
   async function handleDelete(user) {
-    if (!confirm(`XOÁ tài khoản "${user.email}"? Không thể hoàn tác!`)) return
+    if (!(await confirm(`XOÁ tài khoản "${user.email}"? Không thể hoàn tác!`, { danger: true, confirmLabel: 'Xoá vĩnh viễn' }))) return
     const d = await callApi('delete', { user_id: user.id })
     if (d.ok) { showToast('Đã xoá tài khoản'); load() }
     else showToast(d.error || 'Lỗi', 'error')
@@ -99,6 +101,7 @@ function WebUsersTab() {
 
   return (
     <div>
+      {confirmModal}
       {toast && (
         <div style={{
           position: 'fixed', top: 20, right: 20, zIndex: 9999,

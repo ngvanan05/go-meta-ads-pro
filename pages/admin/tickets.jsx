@@ -4,6 +4,7 @@ import AdminLayout from '../../components/AdminLayout'
 import { Badge, Spinner, ErrorBox, CopyButton, EmptyState, AdminPageHeader, AdminCard, AdminButton, AdminInput } from '../../components/AdminUI'
 import { Ticket as TicketIcon, RefreshCw, Trash2, Send, Paperclip } from 'lucide-react'
 import { adminLocalFetch, apiPost } from '../../lib/adminUtils'
+import { useConfirm } from '../../components/ConfirmModal'
 
 async function uploadImageWeb(file) {
   return new Promise((resolve, reject) => {
@@ -35,6 +36,7 @@ function WebTicketsTab() {
   const [replyUploading, setReplyUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
+  const { confirm, confirmModal } = useConfirm()
 
   const adminToken = typeof window !== 'undefined' ? atob(localStorage.getItem('gmap_admin_token') || '') : ''
   const showToast = (msg, type = 'ok') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000) }
@@ -91,7 +93,7 @@ function WebTicketsTab() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Xoá ticket này?')) return
+    if (!(await confirm('Xoá ticket này?', { danger: true, confirmLabel: 'Xoá' }))) return
     await call('delete', { id })
     setSelected(null)
     load()
@@ -115,6 +117,7 @@ function WebTicketsTab() {
 
   return (
     <div>
+      {confirmModal}
       {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, background: toast.type === 'error' ? 'var(--red)' : 'var(--grn)', color: '#fff', borderRadius: 10, padding: '12px 20px', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 20px rgba(0,0,0,.25)' }}>{toast.msg}</div>}
 
       <AdminPageHeader title="Ticket hỗ trợ" icon={TicketIcon} />
@@ -236,16 +239,6 @@ function WebTicketsTab() {
   )
 }
 
-const MENU = [
-  { id: 'overview',        icon: '📊', label: 'Tổng quan' },
-  null,
-  { id: 'web_users',       icon: '🌐', label: 'Web Users (SaaS)' },
-  { id: 'web_tickets',     icon: '🎫', label: 'Support Tickets' },
-  { id: 'policycheck',     icon: '🛡️', label: 'Kiểm tra Vi phạm' },
-  { id: 'ai_knowledge',    icon: '🧠', label: 'AI Knowledge' },
-  { id: 'pixels',          icon: '📈', label: 'Tracking Pixels' },
-  { id: 'smtp',            icon: '📧', label: 'Email / SMTP' },
-]
 
 
 export default function Page() {
