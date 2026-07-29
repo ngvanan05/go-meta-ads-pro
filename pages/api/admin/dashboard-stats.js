@@ -15,8 +15,7 @@ async function handler(req, res) {
       { count: ticketsTotal },
       { count: ticketsOpen },
       { count: ticketsResolved },
-      { count: policyChecks },
-      { data: siteSettings }
+      { count: policyChecks }
     ] = await Promise.all([
       sb.from('users').select('*', { count: 'exact', head: true }),
       sb.from('users').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -24,20 +23,10 @@ async function handler(req, res) {
       sb.from('support_threads').select('*', { count: 'exact', head: true }),
       sb.from('support_threads').select('*', { count: 'exact', head: true }).eq('status', 'open'),
       sb.from('support_threads').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
-      sb.from('policy_check_logs').select('*', { count: 'exact', head: true }),
-      sb.from('site_settings').select('value').eq('key', 'ai_knowledge_prompts').single()
+      sb.from('policy_check_logs').select('*', { count: 'exact', head: true })
     ])
 
-    // AI Knowledge stats
-    let aiDocsActive = 0
-    let aiCharsTotal = 0
-    try {
-      const prompts = siteSettings?.value ? JSON.parse(siteSettings.value) : []
-      aiDocsActive = prompts.filter(p => p.is_active).length
-      aiCharsTotal = prompts.reduce((sum, p) => sum + (p.content?.length || 0), 0)
-    } catch (e) {}
-
-    // We use a fixed average cost estimate for policy checks for now 
+    // We use a fixed average cost estimate for policy checks for now
     // e.g. 200 tokens per check * $0.0015/1k = $0.0003 per check
     const policyCostEstimate = policyChecks * 0.0003
 
@@ -68,10 +57,6 @@ async function handler(req, res) {
         policy: {
           checks: policyChecks || 0,
           estimatedCostUsd: policyCostEstimate
-        },
-        ai: {
-          activeDocs: aiDocsActive,
-          totalChars: aiCharsTotal
         }
       },
       recent: {

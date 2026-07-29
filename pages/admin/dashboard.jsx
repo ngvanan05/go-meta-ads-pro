@@ -137,21 +137,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </AdminCard>
-
-            {/* Thống kê AI Knowledge */}
-            <AdminCard noPadding style={{ padding: '16px', minWidth: 180 }}>
-              <h3 style={{ fontSize: 12, color: 'var(--mut)', textTransform: 'uppercase', marginBottom: 12 }}>AI Knowledge</h3>
-              <div style={{ display: 'flex', gap: 14 }}>
-                <div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--txt)' }}>{stats?.ai?.activeDocs || 0}</div>
-                  <div style={{ fontSize: 11, color: 'var(--mut)' }}>Tài liệu</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--blue)' }}>{((stats?.ai?.totalChars || 0) / 1000).toFixed(1)}K</div>
-                  <div style={{ fontSize: 11, color: 'var(--mut)' }}>Ký tự</div>
-                </div>
-              </div>
-            </AdminCard>
           </div>
 
           {/* Dữ liệu gần đây */}
